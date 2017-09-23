@@ -1,0 +1,3 @@
+[submodule "LegoFumu/lib/modular"]
+	path = LegoFumu/lib/modular
+	url = https://github.com/HSRLCLab/modular.git

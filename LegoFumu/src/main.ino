@@ -1,40 +1,35 @@
 #include <Arduino.h>
 #include <Adafruit_MotorShield.h>
-#include <NewPing.h>
+#include <Modular.h>
+#include <Sonar.h>
 
 Adafruit_MotorShield currentMotorShield = Adafruit_MotorShield();
 Adafruit_DCMotor* left = currentMotorShield.getMotor(2);
 Adafruit_DCMotor* right = currentMotorShield.getMotor(1);
-#define TRIGGER_PIN 13
-#define ECHO_PIN 12
-#define MAX_DISTANCE 200
-NewPing sonar(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE);
+#define SONAR_TRIGGER_PIN 13
+#define SONAR_ECHO_PIN 12
+#define SONAR_MAX_DISTANCE 200
+
 
 int speed = 200;
 int trim = 0;
 int state = 0; // 0 = stop, 1 = walking
+Sonar* sonar;
 String apiBuffer = "";
 
 void setup() {
   Serial.begin(9600);
   currentMotorShield.begin();
+  sonar = new Sonar(SONAR_TRIGGER_PIN, SONAR_ECHO_PIN, SONAR_MAX_DISTANCE);
 }
 
 void loop() {
   delay(10);
   readSerial();
-  scanSonar();
+  sonar->componentLoop();
 }
 
-void scanSonar() {
-  unsigned int uS = sonar.ping_cm();
-  if (uS < 10 && state == 1) {
-    executeTask("stop","");
-  }
-  if (uS >= 10 && state == 0) {
-    executeTask("speed", (String)speed);
-  }
-}
+
 
 void executeTask(String task, String value) {
    // Implemnation need to be done in the derived class for now
