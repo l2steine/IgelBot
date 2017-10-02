@@ -52,6 +52,7 @@ Chassis *chassis;
 Vision *vision;
 PickupSystem *pickupSystem;
 //Strategy *strategy;
+int lc = 0;
 
 void setup() {
   Serial.begin(9600);
@@ -61,7 +62,7 @@ void setup() {
   vision = new Vision();
   pickupSystem = new PickupSystem(PICKUPSYSTEM_PIN);
   Serial.println("IgelBot: System started");
-  setJobState(IGEL_TRACK);
+  setJobState(IGEL_SEARCH);
   start();
 }
 
@@ -93,18 +94,18 @@ void stop() {
 void setJobState(IgelJobState job) {
   //ToDo: Only allow valid state transitions
   state.job = job;
-  Serial.println("New Job: ");
+  Serial.print("New Job: ");
+  Serial.println (job);
 }
 
 /* Run Component actions based on the current state */
+/* Strategy consts */
 #define MIN_OBJECT_DISTANCE_CM 10
 #define TARGET_DEVIATION_TOLARANCE 5
 #define TARGET_DISTANCE_TOLARANCE 190
 #define TARGET_CONTROL_P 2
 
-
 void strategy() {
-  //Serial.println(IGEL_TRACK);
   if (state.sonar.obstacelDistance > MIN_OBJECT_DISTANCE_CM && state.chassis.moving == false) {
     //Serial.println("Strategy: Run forward");
     chassis->forward();
@@ -124,9 +125,11 @@ void strategy() {
   }
   if (state.job == IGEL_TRACK) {
     // Follow Target
-    Serial.print("Track:");
+    chassis->forward();
+    Serial.print("Track (dist, dev):");
     Serial.print(state.vision.targetDistance);
-    //Serial.println(state.vision.targetDeviation);
+    Serial.print(" , ");
+    Serial.println(state.vision.targetDeviation);
     if (state.vision.targetDeviation > TARGET_DEVIATION_TOLARANCE) {
         //Serial.println("LEFT");
         chassis->steer(STEER_RIGHT, state.vision.targetDeviation*TARGET_CONTROL_P);
@@ -149,6 +152,11 @@ void strategy() {
     delay(2000);
     pickupSystem->release();
     setJobState(IGEL_SEARCH);
+  }
+  lc++;
+  if (lc == 100) {
+    Serial.println(state.job);
+    lc = 0;
   }
 }
 
