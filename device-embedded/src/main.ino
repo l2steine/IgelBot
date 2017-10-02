@@ -21,47 +21,49 @@
 #include <Modular.h>
 #include <Sonar.h>
 #include <Chassis.h>
-//#include <Strategy.h>
+#include <Vision.h>
 
 #define MOTOR_RIGHT 1
 #define MOTOR_LEFT 2
+#define SERVO_STEER_C1 5
+#define SERVO_STEER_C2 6
 #define SONAR_TRIGGER_PIN 13
 #define SONAR_ECHO_PIN 12
 #define SONAR_MAX_DISTANCE 200
 
-Sonar *sonar;
-Chassis *chassis;
-//Strategy *strategy;
 struct IgelState {
   ChassisState chassis;
   SonarState sonar;
-  int targetDistance = 100;
-  int targetDeviation = 0; // minus is left, plus is right
+  VisionState vision;
   bool stop = true;
 } state;
 
 String apiBuffer = "";
+Sonar *sonar;
+Chassis *chassis;
+Vision *vision;
+//Strategy *strategy;
 
 void setup() {
   Serial.begin(9600);
   Serial.println("IgelBot: Booting...");
   sonar = new Sonar(SONAR_TRIGGER_PIN, SONAR_ECHO_PIN, SONAR_MAX_DISTANCE);
-  chassis = new Chassis(MOTOR_RIGHT, MOTOR_LEFT);
+  chassis = new Chassis(MOTOR_RIGHT, MOTOR_LEFT, SERVO_STEER_C1, SERVO_STEER_C2);
+  vision = new Vision();
   Serial.println("IgelBot: System started");
-  //strategy = new Strategy();
-  //strategy->start();
+  start();
 }
 
 void loop() {
-  delay(10);
+  delay(100);
   readSerial();
-
   if(!state.stop) {
     // Run Actions based on strategy
     strategy();
     // Loop components
     sonar->loop(&state.sonar);
     chassis->loop(&state.chassis);
+    vision->loop(&state.vision);
   }
 }
 
@@ -76,13 +78,29 @@ void stop() {
 }
 
 /* Run Component actions based on the current state */
+#define MIN_OBJECT_DISTANCE_CM 5
+#define TARGET_DEVIATION_TOLARANCE 5
+
 void strategy() {
-  if (state.sonar.obstacelDistance > 15 && state.chassis.moving == false) {
+  if (state.sonar.obstacelDistance > MIN_OBJECT_DISTANCE_CM && state.chassis.moving == false) {
     Serial.println("Strategy: Run forward");
     chassis->forward();
-  } else {
+  }
+  if (state.sonar.obstacelDistance <= MIN_OBJECT_DISTANCE_CM && state.chassis.moving == true) {
     Serial.println("Strategy: Stop");
     chassis->stop();
+  }
+  // Follow Target
+  if (state.vision.targetDeviation > TARGET_DEVIATION_TOLARANCE) {
+      //Serial.println("LEFT");
+      chassis->steer(STEER_RIGHT, state.vision.targetDeviation*2);
+  }
+  if (state.vision.targetDeviation < TARGET_DEVIATION_TOLARANCE*(-1)) {
+      //Serial.println("RIGHT");
+      chassis->steer(STEER_LEFT, state.vision.targetDeviation*(-2));
+  }
+  if (state.vision.targetDeviation >= TARGET_DEVIATION_TOLARANCE && state.vision.targetDeviation <= TARGET_DEVIATION_TOLARANCE) {
+      chassis->steer(STEER_STRAIGHT, 0);
   }
 }
 
@@ -92,7 +110,18 @@ void executeTask(String task, String value) {
    if (task == "start") {
      start();
    }
-
+   if (task == "steerL") {
+     int val = value.toInt();
+     chassis->steer(STEER_LEFT, val);
+   }
+   if (task == "steerR") {
+     int val = value.toInt();
+     chassis->steer(STEER_RIGHT, val);
+   }
+   if (task == "steerS") {
+     int val = value.toInt();
+     chassis->steer(STEER_STRAIGHT, val);
+   }
    if (task == "stop") {
      stop();
    }

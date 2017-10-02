@@ -14,7 +14,6 @@ class Sonar : public Component
   public:
     Sonar(uint8_t triggerPin, uint8_t echoPin, unsigned int maxDistance);
     void loop(SonarState *state);
-    int scan();
 
   protected:
     NewPing *sonar;

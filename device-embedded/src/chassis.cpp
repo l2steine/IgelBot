@@ -2,11 +2,13 @@
 #include <Chassis.h>
 #include <Adafruit_MotorShield.h>
 
-Chassis::Chassis(uint8_t motorNumRight, uint8_t motorNumLeft) {
+Chassis::Chassis(uint8_t motorNumRight, uint8_t motorNumLeft, uint8_t iPinC1, uint8_t iPinC2) {
   motorShield = Adafruit_MotorShield();
   motorShield.begin();
   motorBackRight = motorShield.getMotor(motorNumRight);
   motorBackLeft = motorShield.getMotor(motorNumLeft);
+  pinC1 = iPinC1;
+  pinC2 = iPinC2;
 }
 
 void Chassis::loop(ChassisState *state) {
@@ -24,10 +26,23 @@ void Chassis::forward() {
 void Chassis::forward(int speed);
 void Chassis::backward();
 void Chassis::backward(int speed);
-void Chassis::right();
-void Chassis::right(int angle);
-void Chassis::left();
-void Chassis::left(int angle);
+
+void Chassis::steer(SteerDirection direction, int angel) {
+  switch (direction) {
+    case STEER_LEFT:
+      analogWrite(pinC1, 0);
+      analogWrite(pinC2, angel);
+      break;
+    case STEER_RIGHT:
+      analogWrite(pinC1, angel);
+      analogWrite(pinC2, 0);
+      break;
+    case STEER_STRAIGHT:
+      analogWrite(pinC1, 0);
+      analogWrite(pinC2, 0);
+      break;
+  }
+}
 
 void Chassis::stop() {
   motorBackLeft->run(RELEASE);

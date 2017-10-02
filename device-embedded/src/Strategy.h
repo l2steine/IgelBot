@@ -9,7 +9,6 @@
 // This construct must be updated later on
 
 
-
 class Strategy : public Component
 {
   public:
