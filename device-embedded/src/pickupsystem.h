@@ -7,10 +7,12 @@
 class PickupSystem : public Component
 {
   public:
-    PickupSystem();
-
+    PickupSystem(uint8_t pinEM);
+    void loop();
+    void pick();
+    void release();
   protected:
-
+    uint8_t pinEM;
 };
 
 #endif
