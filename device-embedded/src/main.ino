@@ -8,7 +8,7 @@
   - A component has
     - a state: struct {ComponentName}State
     - a number of Actions, that initiaite a behavoir in physical or logical operation (e.g. a movement, read a sensor signal)
-    - a loop method, that executes the next step.
+    - a loop method, that executes the next step. A Component loop must never use a timefunciton such as delay()
       The Loop is ment have a very low porcessing time in order to have short reaction time from signals of other component.
   - Only a Component is allowed to update its state (through actions or loop).
   - The main loop works like flux:
@@ -22,6 +22,8 @@
 #include <Sonar.h>
 #include <Chassis.h>
 #include <Vision.h>
+// PICK_SYSTEM
+// VOICE
 
 #define MOTOR_RIGHT 1
 #define MOTOR_LEFT 2
@@ -31,11 +33,14 @@
 #define SONAR_ECHO_PIN 12
 #define SONAR_MAX_DISTANCE 200
 
+enum IgelJobState { IGEL_SEARCH, IGEL_TRACK, IGEL_PICK, IGEL_GOHOME, IGEL_DROP, IGEL_OBSTACLE };
+
 struct IgelState {
   ChassisState chassis;
   SonarState sonar;
   VisionState vision;
   bool stop = true;
+  IgelJobState job;
 } state;
 
 String apiBuffer = "";
@@ -51,11 +56,12 @@ void setup() {
   chassis = new Chassis(MOTOR_RIGHT, MOTOR_LEFT, SERVO_STEER_C1, SERVO_STEER_C2);
   vision = new Vision();
   Serial.println("IgelBot: System started");
+  setJobState(IGEL_SEARCH);
   start();
 }
 
 void loop() {
-  delay(100);
+  delay(10);
   readSerial();
   if(!state.stop) {
     // Run Actions based on strategy
@@ -64,6 +70,8 @@ void loop() {
     sonar->loop(&state.sonar);
     chassis->loop(&state.chassis);
     vision->loop(&state.vision);
+  } else {
+    chassis->stop();
   }
 }
 
@@ -77,9 +85,16 @@ void stop() {
     state.stop = true;
 }
 
+void setJobState(IgelJobState job) {
+  //ToDo: Only allow valid state transitions
+  state.job = job;
+  Serial.println("New Job: " + job);
+}
+
 /* Run Component actions based on the current state */
-#define MIN_OBJECT_DISTANCE_CM 5
+#define MIN_OBJECT_DISTANCE_CM 10
 #define TARGET_DEVIATION_TOLARANCE 5
+#define TARGET_DISTANCE_TOLARANCE 10
 
 void strategy() {
   if (state.sonar.obstacelDistance > MIN_OBJECT_DISTANCE_CM && state.chassis.moving == false) {
@@ -90,17 +105,26 @@ void strategy() {
     Serial.println("Strategy: Stop");
     chassis->stop();
   }
-  // Follow Target
-  if (state.vision.targetDeviation > TARGET_DEVIATION_TOLARANCE) {
-      //Serial.println("LEFT");
-      chassis->steer(STEER_RIGHT, state.vision.targetDeviation*2);
+
+  if (state.job == IGEL_TRACK) {
+    // Follow Target
+    if (state.vision.targetDeviation > TARGET_DEVIATION_TOLARANCE) {
+        //Serial.println("LEFT");
+        chassis->steer(STEER_RIGHT, state.vision.targetDeviation*2);
+    }
+    if (state.vision.targetDeviation < TARGET_DEVIATION_TOLARANCE*(-1)) {
+        //Serial.println("RIGHT");
+        chassis->steer(STEER_LEFT, state.vision.targetDeviation*(-2));
+    }
+    if (state.vision.targetDeviation >= TARGET_DEVIATION_TOLARANCE && state.vision.targetDeviation <= TARGET_DEVIATION_TOLARANCE) {
+        chassis->steer(STEER_STRAIGHT, 0);
+    }
+    if (state.vision.targetDistance >=0 && state.vision.targetDistance < TARGET_DISTANCE_TOLARANCE) {
+      setJobState(IGEL_PICK);
+    }
   }
-  if (state.vision.targetDeviation < TARGET_DEVIATION_TOLARANCE*(-1)) {
-      //Serial.println("RIGHT");
-      chassis->steer(STEER_LEFT, state.vision.targetDeviation*(-2));
-  }
-  if (state.vision.targetDeviation >= TARGET_DEVIATION_TOLARANCE && state.vision.targetDeviation <= TARGET_DEVIATION_TOLARANCE) {
-      chassis->steer(STEER_STRAIGHT, 0);
+  if (state.job == IGEL_PICK) {
+    chassis->stop();
   }
 }
 

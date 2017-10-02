@@ -6,7 +6,7 @@
 #include <Adafruit_MotorShield.h>
 
 struct ChassisState {
-  int speed = 200;
+  int speed = 150;
   bool moving = false;
   uint8_t angel = 0; // - = left, + = right
 };
