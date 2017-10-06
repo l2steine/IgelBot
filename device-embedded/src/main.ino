@@ -23,7 +23,6 @@
 #include <Chassis.h>
 #include <Vision.h>
 #include <Pickupsystem.h>
-// PICK_SYSTEM
 // VOICE
 
 #define MOTOR_RIGHT 1
@@ -51,7 +50,8 @@ Sonar *sonar;
 Chassis *chassis;
 Vision *vision;
 PickupSystem *pickupSystem;
-//Strategy *strategy;
+
+Pixy pixy;
 int lc = 0;
 
 void setup() {
@@ -60,7 +60,7 @@ void setup() {
   sonar = new Sonar(SONAR_TRIGGER_PIN, SONAR_ECHO_PIN, SONAR_MAX_DISTANCE);
   chassis = new Chassis(MOTOR_RIGHT, MOTOR_LEFT, SERVO_STEER_C1, SERVO_STEER_C2);
   vision = new Vision();
-  pickupSystem = new PickupSystem(PICKUPSYSTEM_PIN);
+  //pickupSystem = new PickupSystem(PICKUPSYSTEM_PIN);
   Serial.println("IgelBot: System started");
   setJobState(IGEL_SEARCH);
   start();
@@ -68,14 +68,16 @@ void setup() {
 
 void loop() {
   delay(10);
-  readSerial();
+  //readSerial();
   if(!state.stop) {
-    // Run Actions based on strategy
-    strategy();
     // Loop components
-    sonar->loop(&state.sonar);
+    //sonar->loop(&state.sonar);
+    //Serial.print("DEBUG 1 ");
     chassis->loop(&state.chassis);
     vision->loop(&state.vision);
+
+    // Run Actions based on strategy
+    strategy();
   } else {
     chassis->stop();
   }
@@ -101,11 +103,13 @@ void setJobState(IgelJobState job) {
 /* Run Component actions based on the current state */
 /* Strategy consts */
 #define MIN_OBJECT_DISTANCE_CM 10
-#define TARGET_DEVIATION_TOLARANCE 5
+#define TARGET_DEVIATION_TOLARANCE 100
+#define TARGET_NAV_TOLARANCE 5
 #define TARGET_DISTANCE_TOLARANCE 190
 #define TARGET_CONTROL_P 2
 
 void strategy() {
+
   if (state.sonar.obstacelDistance > MIN_OBJECT_DISTANCE_CM && state.chassis.moving == false) {
     //Serial.println("Strategy: Run forward");
     chassis->forward();
@@ -118,7 +122,9 @@ void strategy() {
     // Wait for snail to appear
     Serial.print("Search: ");
     Serial.println(state.vision.targetDistance);
-    chassis->stop();
+    chassis->forward();
+    chassis->steer(STEER_LEFT, 200);
+    //chassis->stop();
     if (state.vision.targetDistance > 0) {
       setJobState(IGEL_TRACK);
     }
@@ -126,23 +132,35 @@ void strategy() {
   if (state.job == IGEL_TRACK) {
     // Follow Target
     chassis->forward();
-    Serial.print("Track (dist, dev):");
-    Serial.print(state.vision.targetDistance);
-    Serial.print(" , ");
-    Serial.println(state.vision.targetDeviation);
-    if (state.vision.targetDeviation > TARGET_DEVIATION_TOLARANCE) {
+    // Navigae to Target
+    //Serial.println(state.vision.targetDeviation);
+    if (state.vision.targetDeviation > TARGET_NAV_TOLARANCE) {
         //Serial.println("LEFT");
         chassis->steer(STEER_RIGHT, state.vision.targetDeviation*TARGET_CONTROL_P);
     }
-    if (state.vision.targetDeviation < TARGET_DEVIATION_TOLARANCE*(-1)) {
+    if (state.vision.targetDeviation < TARGET_NAV_TOLARANCE*(-1)) {
         //Serial.println("RIGHT");
         chassis->steer(STEER_LEFT, state.vision.targetDeviation*TARGET_CONTROL_P*(-1));
     }
-    if (state.vision.targetDeviation >= TARGET_DEVIATION_TOLARANCE && state.vision.targetDeviation <= TARGET_DEVIATION_TOLARANCE) {
+    if (state.vision.targetDeviation >= TARGET_NAV_TOLARANCE && state.vision.targetDeviation <= TARGET_NAV_TOLARANCE) {
         chassis->steer(STEER_STRAIGHT, 0);
     }
-    if (state.vision.targetDistance > TARGET_DISTANCE_TOLARANCE) {
+    // Target found
+    if (state.vision.targetDistance > TARGET_DISTANCE_TOLARANCE &&
+        state.vision.targetDeviation < TARGET_DEVIATION_TOLARANCE &&
+        state.vision.targetDeviation > TARGET_DEVIATION_TOLARANCE*(-1)
+    ) {
+      Serial.print("Target found");
       setJobState(IGEL_PICK);
+    }
+    // Target lost
+    if ((state.vision.targetDistance > TARGET_DISTANCE_TOLARANCE &&
+        state.vision.targetDeviation > TARGET_DEVIATION_TOLARANCE &&
+        state.vision.targetDeviation < TARGET_DEVIATION_TOLARANCE*(-1)) ||
+        state.vision.targetDistance < 0
+    ) {
+      Serial.print("Target lost");
+      setJobState(IGEL_SEARCH);
     }
   }
   if (state.job == IGEL_PICK) {
@@ -154,8 +172,11 @@ void strategy() {
     setJobState(IGEL_SEARCH);
   }
   lc++;
-  if (lc == 100) {
+  if (lc == 10) {
     Serial.println(state.job);
+    Serial.print("Track (dist, dev):");
+    Serial.print(state.vision.targetDistance);
+    Serial.print(" , ");
     lc = 0;
   }
 }

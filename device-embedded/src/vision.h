@@ -21,7 +21,7 @@ class Vision : public Component
     Vision();
     void loop(VisionState *state);
   protected:
-    Pixy pixy;
+    Pixy myPixy;
     int x;
     int y;
 };
