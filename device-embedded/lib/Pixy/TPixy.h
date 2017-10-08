@@ -142,7 +142,7 @@ template <class LinkType> boolean TPixy<LinkType>::getStart()
     if (w==0 && lastw==0)
 	{
       delayMicroseconds(10);
-	  //return false;
+	  return false;
 	}
     else if (w==PIXY_START_WORD && lastw==PIXY_START_WORD)
 	{

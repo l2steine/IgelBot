@@ -6,7 +6,7 @@
 #include <NewPing.h>
 
 struct SonarState {
-  int obstacelDistance = -1;
+  int obstacelDistance = 9999;
 };
 
 class Sonar : public Component

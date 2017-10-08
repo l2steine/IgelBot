@@ -29,8 +29,8 @@
 #define MOTOR_LEFT 2
 #define SERVO_STEER_C1 5
 #define SERVO_STEER_C2 6
-#define SONAR_TRIGGER_PIN 13
-#define SONAR_ECHO_PIN 12
+#define SONAR_TRIGGER_PIN 9 //yellow
+#define SONAR_ECHO_PIN 8 // orange
 #define SONAR_MAX_DISTANCE 200
 #define PICKUPSYSTEM_PIN 8
 
@@ -68,11 +68,10 @@ void setup() {
 
 void loop() {
   delay(10);
-  //readSerial();
+  readSerial();
   if(!state.stop) {
     // Loop components
-    //sonar->loop(&state.sonar);
-    //Serial.print("DEBUG 1 ");
+    sonar->loop(&state.sonar);
     chassis->loop(&state.chassis);
     vision->loop(&state.vision);
 
@@ -106,25 +105,25 @@ void setJobState(IgelJobState job) {
 #define TARGET_DEVIATION_TOLARANCE 100
 #define TARGET_NAV_TOLARANCE 5
 #define TARGET_DISTANCE_TOLARANCE 190
-#define TARGET_CONTROL_P 2
+#define TARGET_CONTROL_P 1.59 // Linear transformation from deviation in pixesl (max=160) to servo frequency (max=255)
 
 void strategy() {
 
   if (state.sonar.obstacelDistance > MIN_OBJECT_DISTANCE_CM && state.chassis.moving == false) {
-    //Serial.println("Strategy: Run forward");
+    Serial.println("Strategy: Run forward");
+    setJobState(IGEL_SEARCH);
     chassis->forward();
   }
   if (state.sonar.obstacelDistance <= MIN_OBJECT_DISTANCE_CM && state.chassis.moving == true) {
-    //Serial.println("Strategy: Stop");
+    Serial.println("Strategy: Stop");
+    setJobState(IGEL_OBSTACLE);
     chassis->stop();
+    return;
   }
   if (state.job == IGEL_SEARCH) {
     // Wait for snail to appear
-    Serial.print("Search: ");
-    Serial.println(state.vision.targetDistance);
     chassis->forward();
-    chassis->steer(STEER_LEFT, 200);
-    //chassis->stop();
+    chassis->steer(STEER_LEFT, 255);
     if (state.vision.targetDistance > 0) {
       setJobState(IGEL_TRACK);
     }
@@ -133,13 +132,10 @@ void strategy() {
     // Follow Target
     chassis->forward();
     // Navigae to Target
-    //Serial.println(state.vision.targetDeviation);
     if (state.vision.targetDeviation > TARGET_NAV_TOLARANCE) {
-        //Serial.println("LEFT");
         chassis->steer(STEER_RIGHT, state.vision.targetDeviation*TARGET_CONTROL_P);
     }
     if (state.vision.targetDeviation < TARGET_NAV_TOLARANCE*(-1)) {
-        //Serial.println("RIGHT");
         chassis->steer(STEER_LEFT, state.vision.targetDeviation*TARGET_CONTROL_P*(-1));
     }
     if (state.vision.targetDeviation >= TARGET_NAV_TOLARANCE && state.vision.targetDeviation <= TARGET_NAV_TOLARANCE) {
@@ -159,8 +155,8 @@ void strategy() {
         state.vision.targetDeviation < TARGET_DEVIATION_TOLARANCE*(-1)) ||
         state.vision.targetDistance < 0
     ) {
-      Serial.print("Target lost");
-      setJobState(IGEL_SEARCH);
+        Serial.print("Target lost");
+        setJobState(IGEL_SEARCH);
     }
   }
   if (state.job == IGEL_PICK) {
@@ -173,10 +169,10 @@ void strategy() {
   }
   lc++;
   if (lc == 10) {
-    Serial.println(state.job);
+    /*Serial.println(state.job);
     Serial.print("Track (dist, dev):");
     Serial.print(state.vision.targetDistance);
-    Serial.print(" , ");
+    Serial.print(" , ");*/
     lc = 0;
   }
 }

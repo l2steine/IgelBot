@@ -8,6 +8,7 @@
 
 #define VISION_MAX_X 320
 #define VISION_MAX_Y 200
+#define TARGET_LOST_COUNT 10
 
 struct VisionState {
   int targetSignature = 1;
@@ -24,6 +25,7 @@ class Vision : public Component
     Pixy myPixy;
     int x;
     int y;
+    int lostCount;
 };
 
 #endif
