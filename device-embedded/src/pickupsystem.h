@@ -12,12 +12,12 @@ struct PickupState {
 class PickupSystem : public Component
 {
   public:
-    PickupSystem(uint8_t pinEM);
+    PickupSystem(int iPinEM);
     void loop(PickupState *state);
     void pick();
     void release();
   protected:
-    uint8_t pinEM;
+    int pinEM;
     PickupState currentState;
 };
 

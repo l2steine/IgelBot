@@ -32,7 +32,7 @@
 #define SONAR_TRIGGER_PIN 9 //yellow
 #define SONAR_ECHO_PIN 8 // orange
 #define SONAR_MAX_DISTANCE 200
-#define PICKUPSYSTEM_PIN 0
+#define PICKUPSYSTEM_PIN 4
 
 
 enum IgelJobState { IGEL_SEARCH, IGEL_TRACK, IGEL_PICK, IGEL_GOHOME, IGEL_DROP, IGEL_OBSTACLE };
@@ -77,6 +77,7 @@ void loop() {
     vision->loop(&state.vision);
     pickupSystem->loop(&state.pickup);
     // Run Actions based on strategy
+
     strategy();
   } else {
     chassis->stop();

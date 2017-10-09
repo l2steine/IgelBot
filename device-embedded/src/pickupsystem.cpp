@@ -1,6 +1,6 @@
 #include <Pickupsystem.h>
 
-PickupSystem::PickupSystem(uint8_t iPinEM) {
+PickupSystem::PickupSystem(int iPinEM) {
   Serial.print("Init Pickup System ...");
   pinEM = iPinEM;
   pinMode(pinEM, OUTPUT);
