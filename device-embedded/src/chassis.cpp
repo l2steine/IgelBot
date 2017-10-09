@@ -25,7 +25,10 @@ void Chassis::forward() {
   currentState.moving = true;
 }
 
-void Chassis::forward(int speed) {}
+void Chassis::forward(int speed) {
+  currentState.speed = speed;
+  forward();
+}
 void Chassis::backward() {}
 void Chassis::backward(int speed) {}
 

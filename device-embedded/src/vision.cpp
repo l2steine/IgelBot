@@ -31,9 +31,9 @@ void Vision::loop(VisionState *state) {
   if (tagetFound == false) {
     lostCount++;
     if (lostCount > TARGET_LOST_COUNT) {
-      //state->targetDeviation = VISION_MAX_X/2;
+      state->targetDeviation = 0;
       state->targetDistance = -1;
     }
   }
-  Serial.print(state->targetDistance);
+  //Serial.print(state->targetDistance);
 }

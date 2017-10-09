@@ -32,7 +32,7 @@
 #define SONAR_TRIGGER_PIN 9 //yellow
 #define SONAR_ECHO_PIN 8 // orange
 #define SONAR_MAX_DISTANCE 200
-#define PICKUPSYSTEM_PIN 8
+#define PICKUPSYSTEM_PIN 0
 
 
 enum IgelJobState { IGEL_SEARCH, IGEL_TRACK, IGEL_PICK, IGEL_GOHOME, IGEL_DROP, IGEL_OBSTACLE };
@@ -41,6 +41,7 @@ struct IgelState {
   ChassisState chassis;
   SonarState sonar;
   VisionState vision;
+  PickupState pickup;
   bool stop = true;
   IgelJobState job;
 } state;
@@ -60,7 +61,7 @@ void setup() {
   sonar = new Sonar(SONAR_TRIGGER_PIN, SONAR_ECHO_PIN, SONAR_MAX_DISTANCE);
   chassis = new Chassis(MOTOR_RIGHT, MOTOR_LEFT, SERVO_STEER_C1, SERVO_STEER_C2);
   vision = new Vision();
-  //pickupSystem = new PickupSystem(PICKUPSYSTEM_PIN);
+  pickupSystem = new PickupSystem(PICKUPSYSTEM_PIN);
   Serial.println("IgelBot: System started");
   setJobState(IGEL_SEARCH);
   start();
@@ -74,7 +75,7 @@ void loop() {
     sonar->loop(&state.sonar);
     chassis->loop(&state.chassis);
     vision->loop(&state.vision);
-
+    pickupSystem->loop(&state.pickup);
     // Run Actions based on strategy
     strategy();
   } else {
@@ -110,62 +111,30 @@ void setJobState(IgelJobState job) {
 void strategy() {
 
   if (state.sonar.obstacelDistance > MIN_OBJECT_DISTANCE_CM && state.chassis.moving == false) {
-    Serial.println("Strategy: Run forward");
+    Serial.println("Sonar: run forward");
     setJobState(IGEL_SEARCH);
     chassis->forward();
   }
   if (state.sonar.obstacelDistance <= MIN_OBJECT_DISTANCE_CM && state.chassis.moving == true) {
-    Serial.println("Strategy: Stop");
+    Serial.println("Sonar: Stop");
     setJobState(IGEL_OBSTACLE);
     chassis->stop();
     return;
   }
   if (state.job == IGEL_SEARCH) {
-    // Wait for snail to appear
-    chassis->forward();
-    chassis->steer(STEER_LEFT, 255);
-    if (state.vision.targetDistance > 0) {
-      setJobState(IGEL_TRACK);
-    }
+    exeJobSearch();
   }
   if (state.job == IGEL_TRACK) {
-    // Follow Target
-    chassis->forward();
-    // Navigae to Target
-    if (state.vision.targetDeviation > TARGET_NAV_TOLARANCE) {
-        chassis->steer(STEER_RIGHT, state.vision.targetDeviation*TARGET_CONTROL_P);
-    }
-    if (state.vision.targetDeviation < TARGET_NAV_TOLARANCE*(-1)) {
-        chassis->steer(STEER_LEFT, state.vision.targetDeviation*TARGET_CONTROL_P*(-1));
-    }
-    if (state.vision.targetDeviation >= TARGET_NAV_TOLARANCE && state.vision.targetDeviation <= TARGET_NAV_TOLARANCE) {
-        chassis->steer(STEER_STRAIGHT, 0);
-    }
-    // Target found
-    if (state.vision.targetDistance > TARGET_DISTANCE_TOLARANCE &&
-        state.vision.targetDeviation < TARGET_DEVIATION_TOLARANCE &&
-        state.vision.targetDeviation > TARGET_DEVIATION_TOLARANCE*(-1)
-    ) {
-      Serial.print("Target found");
-      setJobState(IGEL_PICK);
-    }
-    // Target lost
-    if ((state.vision.targetDistance > TARGET_DISTANCE_TOLARANCE &&
-        state.vision.targetDeviation > TARGET_DEVIATION_TOLARANCE &&
-        state.vision.targetDeviation < TARGET_DEVIATION_TOLARANCE*(-1)) ||
-        state.vision.targetDistance < 0
-    ) {
-        Serial.print("Target lost");
-        setJobState(IGEL_SEARCH);
-    }
+    exeJobTrack();
   }
   if (state.job == IGEL_PICK) {
-    chassis->stop();
-    Serial.println("Pickup Target");
-    pickupSystem->pick();
-    delay(2000);
-    pickupSystem->release();
-    setJobState(IGEL_SEARCH);
+    exeJobPick();
+  }
+  if (state.job == IGEL_GOHOME) {
+    exeJobGoHome();
+  }
+  if (state.job == IGEL_DROP) {
+    exeJobDrop();
   }
   lc++;
   if (lc == 10) {
@@ -176,6 +145,75 @@ void strategy() {
     lc = 0;
   }
 }
+
+void exeJobSearch() {
+  // Wait for snail to appear
+  chassis->forward();
+  chassis->steer(STEER_LEFT, 255);
+  if (state.vision.targetDistance > 0) {
+    setJobState(IGEL_TRACK);
+  }
+}
+
+void exeJobTrack() {
+  // Follow Target
+  chassis->forward();
+  // Navigae to Target
+  if (state.vision.targetDeviation > TARGET_NAV_TOLARANCE) {
+      chassis->steer(STEER_RIGHT, state.vision.targetDeviation*TARGET_CONTROL_P);
+  }
+  if (state.vision.targetDeviation < TARGET_NAV_TOLARANCE*(-1)) {
+      chassis->steer(STEER_LEFT, state.vision.targetDeviation*TARGET_CONTROL_P*(-1));
+  }
+  if (state.vision.targetDeviation >= TARGET_NAV_TOLARANCE && state.vision.targetDeviation <= TARGET_NAV_TOLARANCE) {
+      chassis->steer(STEER_STRAIGHT, 0);
+  }
+  // Target found
+  if (state.vision.targetDistance > TARGET_DISTANCE_TOLARANCE &&
+      state.vision.targetDeviation < TARGET_DEVIATION_TOLARANCE &&
+      state.vision.targetDeviation > TARGET_DEVIATION_TOLARANCE*(-1)
+  ) {
+    Serial.println("Track: target found");
+    setJobState(IGEL_PICK);
+  }
+  // Target lost
+  if ((state.vision.targetDistance > TARGET_DISTANCE_TOLARANCE &&
+      state.vision.targetDeviation > TARGET_DEVIATION_TOLARANCE &&
+      state.vision.targetDeviation < TARGET_DEVIATION_TOLARANCE*(-1)) ||
+      state.vision.targetDistance < 0
+  ) {
+      Serial.println("Track: target lost");
+      setJobState(IGEL_SEARCH);
+  }
+}
+
+void exeJobPick() {
+  Serial.println("Pickup Target");
+  chassis->forward(50);
+  delay(500);
+  chassis->stop();
+  pickupSystem->pick();
+  delay(2000);
+  setJobState(IGEL_GOHOME);
+}
+
+void exeJobGoHome() {
+  // For now, just wait 2 seconds
+  Serial.println("Go Home");
+  chassis->forward(100);
+  delay(1000);
+  chassis->stop();
+  delay(2000);
+  setJobState(IGEL_DROP);
+}
+
+void exeJobDrop() {
+  Serial.println("Drop Target");
+  pickupSystem->release();
+  setJobState(IGEL_SEARCH);
+}
+
+
 
 void executeTask(String task, String value) {
    // Implemnation need to be done in the derived class for now
