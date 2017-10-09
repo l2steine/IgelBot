@@ -21,7 +21,10 @@ class Vision : public Component
   public:
     Vision();
     void loop(VisionState *state);
+    void reset();
+    void setTarget(int signature);
   protected:
+    VisionState currentState;
     Pixy myPixy;
     int x;
     int y;

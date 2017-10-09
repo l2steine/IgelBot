@@ -35,7 +35,15 @@
 #define PICKUPSYSTEM_PIN 4
 
 
-enum IgelJobState { IGEL_SEARCH, IGEL_TRACK, IGEL_PICK, IGEL_GOHOME, IGEL_DROP, IGEL_OBSTACLE };
+enum IgelJobState {
+  IGEL_SEARCH,
+  IGEL_TRACK,
+  IGEL_PICK,
+  IGEL_GOHOME,
+  IGEL_DROP,
+  IGEL_OBSTACLE,
+  RESUME_LAST
+};
 
 struct IgelState {
   ChassisState chassis;
@@ -54,6 +62,7 @@ PickupSystem *pickupSystem;
 
 Pixy pixy;
 int lc = 0;
+IgelJobState lastJobState;
 
 void setup() {
   Serial.begin(9600);
@@ -96,7 +105,12 @@ void stop() {
 
 void setJobState(IgelJobState job) {
   //ToDo: Only allow valid state transitions
-  state.job = job;
+  if (job == RESUME_LAST) {
+    state.job = lastJobState;
+  } else {
+    lastJobState = state.job;
+    state.job = job;
+  }
   Serial.print("New Job: ");
   Serial.println (job);
 }
@@ -111,13 +125,12 @@ void setJobState(IgelJobState job) {
 
 void strategy() {
 
-  if (state.sonar.obstacelDistance > MIN_OBJECT_DISTANCE_CM && state.chassis.moving == false) {
-    Serial.println("Sonar: run forward");
-    setJobState(IGEL_SEARCH);
-    chassis->forward();
+  if (state.job == IGEL_OBSTACLE && state.sonar.obstacelDistance > MIN_OBJECT_DISTANCE_CM) {
+    Serial.println("Sonar: No more obstacle");
+    setJobState(RESUME_LAST);
   }
   if (state.sonar.obstacelDistance <= MIN_OBJECT_DISTANCE_CM && state.chassis.moving == true) {
-    Serial.println("Sonar: Stop");
+    Serial.println("Sonar: Obstacle found");
     setJobState(IGEL_OBSTACLE);
     chassis->stop();
     return;
@@ -149,7 +162,7 @@ void strategy() {
 
 void exeJobSearch() {
   // Wait for snail to appear
-  chassis->forward();
+  chassis->forward(150);
   chassis->steer(STEER_LEFT, 255);
   if (state.vision.targetDistance > 0) {
     setJobState(IGEL_TRACK);
@@ -158,7 +171,7 @@ void exeJobSearch() {
 
 void exeJobTrack() {
   // Follow Target
-  chassis->forward();
+  chassis->forward(100);
   // Navigae to Target
   if (state.vision.targetDeviation > TARGET_NAV_TOLARANCE) {
       chassis->steer(STEER_RIGHT, state.vision.targetDeviation*TARGET_CONTROL_P);
@@ -190,8 +203,9 @@ void exeJobTrack() {
 
 void exeJobPick() {
   Serial.println("Pickup Target");
-  chassis->forward(50);
-  delay(500);
+  vision->reset();
+  chassis->forward(65);
+  delay(900);
   chassis->stop();
   pickupSystem->pick();
   delay(2000);
@@ -201,7 +215,8 @@ void exeJobPick() {
 void exeJobGoHome() {
   // For now, just wait 2 seconds
   Serial.println("Go Home");
-  chassis->forward(100);
+  chassis->steer(STEER_STRAIGHT, 0);
+  chassis->forward(200);
   delay(1000);
   chassis->stop();
   delay(2000);
@@ -211,6 +226,9 @@ void exeJobGoHome() {
 void exeJobDrop() {
   Serial.println("Drop Target");
   pickupSystem->release();
+  chassis->steer(STEER_STRAIGHT, 0);
+  chassis->backward(200);
+  delay(2000);
   setJobState(IGEL_SEARCH);
 }
 

@@ -29,8 +29,17 @@ void Chassis::forward(int speed) {
   currentState.speed = speed;
   forward();
 }
-void Chassis::backward() {}
-void Chassis::backward(int speed) {}
+void Chassis::backward() {
+  motorBackLeft->setSpeed(currentState.speed);
+  motorBackRight->setSpeed(currentState.speed);
+  motorBackLeft->run(BACKWARD);
+  motorBackRight->run(BACKWARD);
+  currentState.moving = true;
+}
+void Chassis::backward(int speed) {
+  currentState.speed = speed;
+  backward();
+}
 
 void Chassis::steer(SteerDirection direction, int angel) {
   switch (direction) {
