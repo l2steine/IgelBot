@@ -77,7 +77,7 @@ void setup() {
 }
 
 void loop() {
-  delay(10);
+  //delay(10);
   readSerial();
   if(!state.stop) {
     // Loop components
@@ -86,10 +86,11 @@ void loop() {
     vision->loop(&state.vision);
     pickupSystem->loop(&state.pickup);
     // Run Actions based on strategy
-
     strategy();
   } else {
     chassis->stop();
+    pickupSystem->release();
+    setJobState(IGEL_SEARCH);
   }
 }
 
@@ -124,7 +125,7 @@ void setJobState(IgelJobState job) {
 #define TARGET_CONTROL_P 1.59 // Linear transformation from deviation in pixesl (max=160) to servo frequency (max=255)
 
 void strategy() {
-
+  // To be discussed: When should Sonar be activated (in which sates)
   if (state.job == IGEL_OBSTACLE && state.sonar.obstacelDistance > MIN_OBJECT_DISTANCE_CM) {
     Serial.println("Sonar: No more obstacle");
     setJobState(RESUME_LAST);
@@ -135,24 +136,14 @@ void strategy() {
     chassis->stop();
     return;
   }
-  if (state.job == IGEL_SEARCH) {
-    exeJobSearch();
-  }
-  if (state.job == IGEL_TRACK) {
-    exeJobTrack();
-  }
-  if (state.job == IGEL_PICK) {
-    exeJobPick();
-  }
-  if (state.job == IGEL_GOHOME) {
-    exeJobGoHome();
-  }
-  if (state.job == IGEL_DROP) {
-    exeJobDrop();
-  }
+  if (state.job == IGEL_SEARCH) { exeJobSearch(); }
+  if (state.job == IGEL_TRACK)  { exeJobTrack();  }
+  if (state.job == IGEL_PICK)   { exeJobPick();   }
+  if (state.job == IGEL_GOHOME) { exeJobGoHome(); }
+  if (state.job == IGEL_DROP)   { exeJobDrop();   }
   lc++;
-  if (lc == 10) {
-    /*Serial.println(state.job);
+  if (lc == 100) {
+    /*Serial.println(state.job);s
     Serial.print("Track (dist, dev):");
     Serial.print(state.vision.targetDistance);
     Serial.print(" , ");*/
@@ -247,10 +238,6 @@ void executeTask(String task, String value) {
    if (task == "steerR") {
      int val = value.toInt();
      chassis->steer(STEER_RIGHT, val);
-   }
-   if (task == "steerS") {
-     int val = value.toInt();
-     chassis->steer(STEER_STRAIGHT, val);
    }
    if (task == "stop") {
      stop();
