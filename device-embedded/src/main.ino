@@ -23,16 +23,8 @@
 #include <Chassis.h>
 #include <Vision.h>
 #include <Pickupsystem.h>
+#include <Pins.h>
 // VOICE
-
-#define MOTOR_RIGHT 1
-#define MOTOR_LEFT 2
-#define SERVO_STEER_C1 5
-#define SERVO_STEER_C2 6
-#define SONAR_TRIGGER_PIN 9 //yellow
-#define SONAR_ECHO_PIN 8 // orange
-#define SONAR_MAX_DISTANCE 200
-#define PICKUPSYSTEM_PIN 4
 
 
 enum IgelJobState {
@@ -60,7 +52,6 @@ Chassis *chassis;
 Vision *vision;
 PickupSystem *pickupSystem;
 
-Pixy pixy;
 int lc = 0;
 IgelJobState lastJobState;
 
@@ -118,11 +109,6 @@ void setJobState(IgelJobState job) {
 
 /* Run Component actions based on the current state */
 /* Strategy consts */
-#define MIN_OBJECT_DISTANCE_CM 10
-#define TARGET_DEVIATION_TOLARANCE 100
-#define TARGET_NAV_TOLARANCE 5
-#define TARGET_DISTANCE_TOLARANCE 190
-#define TARGET_CONTROL_P 1.59 // Linear transformation from deviation in pixesl (max=160) to servo frequency (max=255)
 
 void strategy() {
   // To be discussed: When should Sonar be activated (in which sates)

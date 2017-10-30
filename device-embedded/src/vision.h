@@ -3,7 +3,7 @@
 
 #include "Arduino.h"
 #include "Modular.h"
-#include "Pixy.h"
+#include "PixyI2C.h"
 #include <SPI.h>
 
 #define VISION_MAX_X 320
@@ -19,13 +19,15 @@ struct VisionState {
 class Vision : public Component
 {
   public:
+    //Vision(uint8_t pinSS);
     Vision();
     void loop(VisionState *state);
     void reset();
     void setTarget(int signature);
   protected:
     VisionState currentState;
-    Pixy myPixy;
+    //PixySPI_SS myPixy;
+    PixyI2C myPixy;
     int x;
     int y;
     int lostCount;
