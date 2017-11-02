@@ -17,20 +17,25 @@
 
 // Setup for the Feather
 // Chassis Pins
-#define MOTOR_RIGHT 11
-#define MOTOR_LEFT 12
-#define SERVO_STEER_C1 5
-#define SERVO_STEER_C2 6
+#define SERVO_FRONT_RIGHT 0
+#define SERVO_FRONT_LEFT 1
+#define SERVO_BACK_RIGHT 6
+#define SERVO_BACK_LEFT 5
+#define SERVO_BACKBONE 3
+
 // Sonar Pins
 #define SONAR_TRIGGER_PIN 10 //yellow
 #define SONAR_ECHO_PIN 9 // orange
+
 // Pickup Pins
 #define PICKUPSYSTEM_PIN 13
+
 // Communicaiton Pins
 #define COMMUNICAION_CS 8
 #define COMMUNICAION_IRQ 7
 #define COMMUNICAION_RST 4
 #define COMMUNICAION_EN 2
+
 // Vision Pins
 #define VISION_SS 19
 

@@ -20,7 +20,8 @@
 #include <Arduino.h>
 #include <Modular.h>
 #include <Sonar.h>
-#include <Chassis.h>
+//#include <Chassis.h>
+#include <ChassisWalking.h>
 #include <Vision.h>
 #include <Pickupsystem.h>
 #include <Pins.h>
@@ -48,7 +49,7 @@ struct IgelState {
 
 String apiBuffer = "";
 Sonar *sonar;
-Chassis *chassis;
+ChassisWalking *chassis;
 Vision *vision;
 PickupSystem *pickupSystem;
 
@@ -56,10 +57,15 @@ int lc = 0;
 IgelJobState lastJobState;
 
 void setup() {
+
   Serial.begin(9600);
+  while (!Serial) {
+    ; // wait for serial port to connect. Needed for native USB port only
+  }
   Serial.println("IgelBot: Booting...");
   sonar = new Sonar(SONAR_TRIGGER_PIN, SONAR_ECHO_PIN, SONAR_MAX_DISTANCE);
-  chassis = new Chassis(MOTOR_RIGHT, MOTOR_LEFT, SERVO_STEER_C1, SERVO_STEER_C2);
+  //chassis = new Chassis(MOTOR_RIGHT, MOTOR_LEFT, SERVO_STEER_C1, SERVO_STEER_C2);
+  chassis = new ChassisWalking(SERVO_FRONT_RIGHT, SERVO_FRONT_LEFT, SERVO_BACK_RIGHT, SERVO_BACK_LEFT, SERVO_BACKBONE);
   vision = new Vision();
   pickupSystem = new PickupSystem(PICKUPSYSTEM_PIN);
   Serial.println("IgelBot: System started");
@@ -72,12 +78,13 @@ void loop() {
   readSerial();
   if(!state.stop) {
     // Loop components
-    sonar->loop(&state.sonar);
+    //sonar->loop(&state.sonar);
+    chassis->forward();
     chassis->loop(&state.chassis);
-    vision->loop(&state.vision);
-    pickupSystem->loop(&state.pickup);
+    //vision->loop(&state.vision);
+    //pickupSystem->loop(&state.pickup);
     // Run Actions based on strategy
-    strategy();
+    //strategy();
   } else {
     chassis->stop();
     pickupSystem->release();
