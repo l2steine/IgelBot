@@ -38,6 +38,10 @@ class ChassisWalking : public Component
     uint8_t servoLB;
     uint8_t servoBackbone;
     Adafruit_PWMServoDriver pwm;
+    int servoDirAll = 1;
+    int pulselen = SERVOMIN;
+    unsigned long time;
+    int stepTime = 1000; // stepsize in microseconds
 };
 
 #endif

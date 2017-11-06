@@ -20,7 +20,7 @@
 #define SERVO_FRONT_RIGHT 0
 #define SERVO_FRONT_LEFT 1
 #define SERVO_BACK_RIGHT 6
-#define SERVO_BACK_LEFT 5
+#define SERVO_BACK_LEFT 7
 #define SERVO_BACKBONE 3
 
 // Sonar Pins

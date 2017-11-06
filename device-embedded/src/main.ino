@@ -59,8 +59,8 @@ IgelJobState lastJobState;
 void setup() {
 
   Serial.begin(9600);
-  while (!Serial) {
-    ; // wait for serial port to connect. Needed for native USB port only
+  while ( ! Serial ) {
+      delay( 1 );
   }
   Serial.println("IgelBot: Booting...");
   sonar = new Sonar(SONAR_TRIGGER_PIN, SONAR_ECHO_PIN, SONAR_MAX_DISTANCE);
