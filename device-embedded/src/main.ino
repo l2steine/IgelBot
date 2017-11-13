@@ -18,6 +18,9 @@
 */
 
 #include <Arduino.h>
+#include <WiFi101.h>
+#include <aREST.h>
+#include <WiFiConfig.h>
 #include <Modular.h>
 #include <Sonar.h>
 //#include <Chassis.h>
@@ -25,6 +28,7 @@
 #include <Vision.h>
 #include <Pickupsystem.h>
 #include <Pins.h>
+
 // VOICE
 
 
@@ -47,17 +51,24 @@ struct IgelState {
   IgelJobState job;
 } state;
 
-String apiBuffer = "";
 Sonar *sonar;
 ChassisWalking *chassis;
 Vision *vision;
 PickupSystem *pickupSystem;
 
+// Declarations for WiFi API
+WiFiServer* server;
+WiFiClient client;
+int status = WL_IDLE_STATUS;
+aREST rest = aREST();
+// Declare Functions for API
+int start(String command);
+int stop(String command);
+
 int lc = 0;
 IgelJobState lastJobState;
 
 void setup() {
-
   Serial.begin(9600);
   while ( ! Serial ) {
       delay( 1 );
@@ -68,14 +79,34 @@ void setup() {
   chassis = new ChassisWalking(SERVO_FRONT_RIGHT, SERVO_FRONT_LEFT, SERVO_BACK_RIGHT, SERVO_BACK_LEFT, SERVO_BACKBONE);
   vision = new Vision();
   pickupSystem = new PickupSystem(PICKUPSYSTEM_PIN);
+  // Setup the WiFi Connection
+  WiFi.setPins(8,7,4,2);
+  server = new WiFiServer(LISTEN_PORT);
+  rest.function("start",start);
+  rest.function("stop",stop);
+  rest.set_id("IG1000");
+  rest.set_name("Igel 1.0");
+  // Connect to WiFi
+  while (status != WL_CONNECTED) {
+    Serial.print("Attempting to connect to SSID: ");
+    Serial.println(ssid);
+    status = WiFi.begin(ssid, password);
+    // Wait 10 seconds for connection:
+    delay(1000);
+  }
+  Serial.println("WiFi connected");
+  server->begin();
+  Serial.println("Web Server started");
+  // Print the IP address
+  IPAddress ip = WiFi.localIP();
+  Serial.print("IP Address: ");
+  Serial.println(ip);
   Serial.println("IgelBot: System started");
   setJobState(IGEL_SEARCH);
-  start();
 }
 
 void loop() {
-  //delay(10);
-  readSerial();
+  delay(10);
   if(!state.stop) {
     // Loop components
     //sonar->loop(&state.sonar);
@@ -90,16 +121,24 @@ void loop() {
     pickupSystem->release();
     setJobState(IGEL_SEARCH);
   }
+  if (!client) {
+    client = server->available();
+  }
+  else if (client.available()) {
+      rest.handle(client);
+  }
 }
 
 /* main Action Start */
-void start() {
+int start(String command) {
     state.stop = false;
+    return 1;
 }
 
 /* main Action Start */
-void stop() {
+int stop(String command) {
     state.stop = true;
+    return 1;
 }
 
 void setJobState(IgelJobState job) {
@@ -110,8 +149,8 @@ void setJobState(IgelJobState job) {
     lastJobState = state.job;
     state.job = job;
   }
-  Serial.print("New Job: ");
-  Serial.println (job);
+  //Serial.print("New Job: ");
+  //Serial.println (job);
 }
 
 /* Run Component actions based on the current state */
@@ -214,49 +253,4 @@ void exeJobDrop() {
   chassis->backward(200);
   delay(2000);
   setJobState(IGEL_SEARCH);
-}
-
-
-
-void executeTask(String task, String value) {
-   // Implemnation need to be done in the derived class for now
-   Serial.println(task + ":" + value);
-   if (task == "start") {
-     start();
-   }
-   if (task == "steerL") {
-     int val = value.toInt();
-     chassis->steer(STEER_LEFT, val);
-   }
-   if (task == "steerR") {
-     int val = value.toInt();
-     chassis->steer(STEER_RIGHT, val);
-   }
-   if (task == "stop") {
-     stop();
-   }
-}
-
-void readSerial() {
-  while (Serial.available() > 0) {
-    //workstate:'workstate',rate:'blinkrate'\n
-    //workstate:1, rate:30\n
-
-    if (Serial.available() > 0) {
-         char c = Serial.read();
-         apiBuffer += c;
-         //Serial.println(apiBuffer);
-        if (c == ';') {
-          //Serial.println("Task revieced: " + apiBuffer);
-          String order = apiBuffer.substring(0, apiBuffer.length() - 1);
-          int j = order.indexOf(':');
-          String task = order.substring(0, j);
-          String value = order.substring(j+1);
-          task.trim();
-          value.trim();
-          executeTask(task, value);
-          apiBuffer = "";
-        }
-    }
-  }
 }

@@ -61,14 +61,14 @@ void ChassisWalking::loop(ChassisState *state) {
     //move if steptime is reached, vor now move all legs simoultanously
     if (time + stepTime < micros()) {
       pulselen += servoDirAll;
-      Serial.println(pulselen);
-      /*pwm.setPWM(servoRF, 0, pulselen);
+      //Serial.println(pulselen);
+      pwm.setPWM(servoRF, 0, pulselen);
       pwm.setPWM(servoLF, 0, pulselen);
       pwm.setPWM(servoRB, 0, pulselen);
-      pwm.setPWM(servoLB, 0, pulselen);*/
+      pwm.setPWM(servoLB, 0, pulselen);
       if (pulselen > SERVOMAX || pulselen < SERVOMIN) {
         servoDirAll = servoDirAll*(-1);
-        Serial.println("Change Direction");
+        //Serial.println("Change Direction");
       }
       time = micros();
     }

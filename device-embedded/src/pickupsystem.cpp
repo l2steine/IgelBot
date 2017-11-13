@@ -13,12 +13,12 @@ PickupSystem::PickupSystem(int iPinEM) {
 void PickupSystem::pick() {
   currentState.picking = true;
   digitalWrite(pinEM, HIGH);
-  Serial.println("HIGH");
+  //Serial.println("HIGH");
 }
 void PickupSystem::release() {
   currentState.picking = false;
   digitalWrite(pinEM, LOW);
-  Serial.println("LOW");
+  //erial.println("LOW");
 }
 
 void PickupSystem::loop(PickupState *state) {

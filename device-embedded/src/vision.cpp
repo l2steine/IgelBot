@@ -38,7 +38,7 @@ void Vision::loop(VisionState *state) {
         currentState.targetDeviation = x - VISION_MAX_X/2;
         currentState.targetDistance = y;
         tagetFound = true;
-        digitalWrite(13, HIGH);
+        //digitalWrite(13, HIGH);
       }
     }
   }
@@ -47,7 +47,7 @@ void Vision::loop(VisionState *state) {
     if (lostCount > TARGET_LOST_COUNT) {
       currentState.targetDeviation = 0;
       currentState.targetDistance = -1;
-      digitalWrite(13, LOW);
+      //digitalWrite(13, LOW);
     }
   }
   state->targetDeviation = currentState.targetDeviation;

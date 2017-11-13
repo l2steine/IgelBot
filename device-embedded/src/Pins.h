@@ -35,6 +35,7 @@
 #define COMMUNICAION_IRQ 7
 #define COMMUNICAION_RST 4
 #define COMMUNICAION_EN 2
+#define LISTEN_PORT 80
 
 // Vision Pins
 #define VISION_SS 19
