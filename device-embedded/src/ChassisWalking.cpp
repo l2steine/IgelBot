@@ -13,8 +13,19 @@ ChassisWalking::ChassisWalking(uint8_t servoNumRightFront, uint8_t servoNumLeftF
   servoRB = servoNumRightBack;
   servoLB = servoNumLeftBack;
   servoBackbone = servoNumBackbone;
+  // DEBUG
+  setWalkingPattern(currentWalkingPattern);
+  // END DEBUG
   time = micros();
+  stepTime = micros();
   Serial.println("[OK]");
+}
+
+void ChassisWalking::setWalkingPattern(WalikingPattern pattern) {
+  currentWalkingPattern = pattern;
+  stepSize = currentWalkingPattern.period/STEPS_PER_MEASURE*1000;
+  Serial.print("Step Size: ");
+  Serial.println(stepSize);
 }
 
 void ChassisWalking::forward() {
@@ -49,8 +60,20 @@ void ChassisWalking::steer(SteerDirection direction, int angel) {
 }
 
 void ChassisWalking::stop() {
-
+  //ToDo: set all legs to postion of step 0
   currentState.moving = false;
+}
+
+double ChassisWalking::calculateSlope(int steps[], int step) {
+  // this last defined step
+  int s1 = step;
+  int s2 = step+1;
+  if (s2 >= STEPS_PER_MEASURE) {
+    s2 = 0;
+  }
+  double slope = 0;
+  slope = (steps[s2]-steps[s1])*1.0/stepSize;
+  return slope;
 }
 
 void ChassisWalking::loop(ChassisState *state) {
@@ -58,18 +81,29 @@ void ChassisWalking::loop(ChassisState *state) {
   state->moving = currentState.moving;
 
   if (currentState.moving) {
-    //move if steptime is reached, vor now move all legs simoultanously
-    if (time + stepTime < micros()) {
-      pulselen += servoDirAll;
-      //Serial.println(pulselen);
-      pwm.setPWM(servoRF, 0, pulselen);
-      pwm.setPWM(servoLF, 0, pulselen);
-      pwm.setPWM(servoRB, 0, pulselen);
-      pwm.setPWM(servoLB, 0, pulselen);
-      if (pulselen > SERVOMAX || pulselen < SERVOMIN) {
-        servoDirAll = servoDirAll*(-1);
-        //Serial.println("Change Direction");
+    //Chekc if next frame is reached
+    if (time + frameSize < micros()) {
+      // check if next step is reached
+      if (stepTime + stepSize < micros()) {
+        // calculate new slope for each leg
+        step++;
+        if (step >= STEPS_PER_MEASURE) {
+          step = 0;
+        }
+        // interplaote slope between servoMin and ServoMax
+        slopeRF = calculateSlope(currentWalkingPattern.rf, step);
+        slopeLF = calculateSlope(currentWalkingPattern.lf, step);
+        slopeRB = calculateSlope(currentWalkingPattern.rb, step);
+        slopeLB = calculateSlope(currentWalkingPattern.lb, step);
+        stepTime = time;
+        //Serial.print("Step: ");
+        //Serial.println(step);
       }
+      int dt = time - stepTime;
+      pwm.setPWM(servoRF, 0, currentWalkingPattern.rfPwm0 + dt * (slopeRF/100) * currentWalkingPattern.rfPwm100);
+      pwm.setPWM(servoLF, 0, currentWalkingPattern.lfPwm0 + dt * (slopeLF/100) * currentWalkingPattern.lfPwm100);
+      pwm.setPWM(servoRB, 0, currentWalkingPattern.rbPwm0 + dt * (slopeRB/100) * currentWalkingPattern.rbPwm100);
+      pwm.setPWM(servoLB, 0, currentWalkingPattern.lbPwm0 + dt * (slopeLB/100) * currentWalkingPattern.lbPwm100);
       time = micros();
     }
   }

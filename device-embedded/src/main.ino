@@ -20,13 +20,13 @@
 #include <Arduino.h>
 #include <WiFi101.h>
 #include <aREST.h>
-#include <WiFiConfig.h>
 #include <Modular.h>
 #include <Sonar.h>
 //#include <Chassis.h>
 #include <ChassisWalking.h>
 #include <Vision.h>
 #include <Pickupsystem.h>
+#include <WiFiConfig.h>
 #include <Pins.h>
 
 // VOICE
@@ -86,14 +86,29 @@ void setup() {
   rest.function("stop",stop);
   rest.set_id("IG1000");
   rest.set_name("Igel 1.0");
-  // Connect to WiFi
-  while (status != WL_CONNECTED) {
-    Serial.print("Attempting to connect to SSID: ");
+  // Connect to WiFi or create one
+  int cc = 0;
+
+  while (status != WL_CONNECTED || status == WL_AP_LISTENING) {
+    if (cc > 0) {
+      Serial.print("Create new Accespoint: ");
+      Serial.println(ssid_igel);
+      status = WiFi.beginAP(ssid_igel);
+       if (status != WL_AP_LISTENING) {
+         Serial.println("Failed to create Accesspoint");
+       }
+       break;
+    }
+    Serial.print("Attempting to connect to SSID (attempt  ");
+    Serial.print(cc);
+    Serial.print("): ");
     Serial.println(ssid);
     status = WiFi.begin(ssid, password);
     // Wait 10 seconds for connection:
     delay(1000);
+    cc++;
   }
+
   Serial.println("WiFi connected");
   server->begin();
   Serial.println("Web Server started");
@@ -101,12 +116,13 @@ void setup() {
   IPAddress ip = WiFi.localIP();
   Serial.print("IP Address: ");
   Serial.println(ip);
+
   Serial.println("IgelBot: System started");
   setJobState(IGEL_SEARCH);
 }
 
 void loop() {
-  delay(10);
+
   if(!state.stop) {
     // Loop components
     //sonar->loop(&state.sonar);
