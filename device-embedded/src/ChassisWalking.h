@@ -6,8 +6,8 @@
 #include <Adafruit_PWMServoDriver.h>
 #include <ArduinoJson.h>
 
-#define SERVOMIN  150  // this is the 'minimum' pulse length count (out of 4096)
-#define SERVOMAX  600  // this is the 'maximum' pulse length count (out of 4096)
+#define SERVOMIN  0  // this is the 'minimum' pulse length count (out of 4096)
+#define SERVOMAX  400  // this is the 'maximum' pulse length count (out of 4096)
 #define STEPS_PER_MEASURE 16
 
 struct ChassisState {
@@ -15,14 +15,28 @@ struct ChassisState {
   bool moving = false;
   uint8_t angel = 0; // - = left, + = right
 };
+/*
+// One foot after the other
+//                              0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15
+int rf [STEPS_PER_MEASURE] = { 50, 72, 25, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50 }; // Right Front
+int lf [STEPS_PER_MEASURE] = { 50, 50, 50, 50, 50, 75, 25, 50, 50, 50, 50, 50, 50, 50, 50, 50 }; // Left Front
+int rb [STEPS_PER_MEASURE] = { 50, 50, 50, 50, 50, 50, 50, 50, 50, 75, 25, 50, 50, 50, 50, 50 }; // Right Back
+int lb [STEPS_PER_MEASURE] = { 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 75, 25, 50 }; // Left Back
 
+// Stand
+//                              0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15
+int rf [STEPS_PER_MEASURE] = { 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50 }; // Right Front
+int lf [STEPS_PER_MEASURE] = { 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50 }; // Left Front
+int rb [STEPS_PER_MEASURE] = { 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50 }; // Right Back
+int lb [STEPS_PER_MEASURE] = { 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50 }; // Left Back
+*/
 struct WalikingPattern {
-  int period = 4000;
+  int period = 5000;
   //                              0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15
-  int rf [STEPS_PER_MEASURE] = { 50, 72, 25, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50 }; // Right Front
-  int lf [STEPS_PER_MEASURE] = { 50, 50, 50, 50, 50, 75, 25, 50, 50, 50, 50, 50, 50, 50, 50, 50 }; // Left Front
-  int rb [STEPS_PER_MEASURE] = { 50, 50, 50, 50, 50, 50, 50, 50, 50, 75, 25, 50, 50, 50, 50, 50 }; // Right Back
-  int lb [STEPS_PER_MEASURE] = { 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 75, 25, 50 }; // Left Back
+  int rf [STEPS_PER_MEASURE] = { 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50, 50 }; // Right Front
+  int lf [STEPS_PER_MEASURE] = {  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0 }; // Left Front
+  int rb [STEPS_PER_MEASURE] = {100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100 }; // Right Back
+  int lb [STEPS_PER_MEASURE] = {100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100 }; // Left Back
   int bb [STEPS_PER_MEASURE] = { }; // Backbone
   int rfPwm0 = SERVOMIN;
   int lfPwm0 = SERVOMIN;

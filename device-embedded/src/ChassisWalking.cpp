@@ -62,6 +62,11 @@ void ChassisWalking::steer(SteerDirection direction, int angel) {
 void ChassisWalking::stop() {
   //ToDo: set all legs to postion of step 0
   currentState.moving = false;
+  pwm.setPWM(servoRF, 0, 0);
+  pwm.setPWM(servoLF, 0, 0);
+  pwm.setPWM(servoRB, 0, 0);
+  pwm.setPWM(servoLB, 0, 0);
+  time = micros();
 }
 
 double ChassisWalking::calculateSlope(int steps[], int step) {
