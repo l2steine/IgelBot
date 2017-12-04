@@ -78,12 +78,10 @@ void loopApi() {
       // read request
       String req = client.readString();
       //handle Request
-
       String response = handleRequest(req);
       // send response
       printHeaders();
       client.print(response.c_str());
-      Serial.println(response.c_str());
       client.stop();
     }
   }
@@ -105,9 +103,9 @@ String handleRequest(String req) {
   String url = fullUrl.substring(0, req.indexOf("?")-1);
   String params = fullUrl.substring(req.indexOf("?"));
   if (method == "POST") {
-    Serial.println(req);
+    //Serial.println(req);
     String content = req.substring(req.indexOf("\r\n\r\n"));
-    Serial.println(content);
+    //Serial.println(content);
     return handlePOST(url, content);
   } else {
     // for now, treat all other requests like GET requests
@@ -127,8 +125,8 @@ String handlePOST(String url, String content) {
     JsonArray& StartPosistons = root["StartPosistons"];
     JsonArray& Amplicifations = root["Amplicifations"];
     JsonArray& Speed = root["Speed"];
-    for (int s; s < 4; s++) {
-      chassis->legPos[s] = StartPosistons[s];
+    for (int s = 0; s < 4; s++) {
+      chassis->startFrame[s] = StartPosistons[s];
       chassis->legAmp[s] = Amplicifations[s];
       chassis->legSpeed[s] = Speed[s];
     }

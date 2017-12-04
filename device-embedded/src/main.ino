@@ -77,6 +77,7 @@ void setup() {
 
   Serial.println("IgelBot: System started");
   setJobState(IGEL_SEARCH);
+  stop();
 }
 
 void loop() {

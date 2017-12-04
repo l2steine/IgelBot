@@ -36,15 +36,18 @@ class ChassisWalking : public Component
     void backward(int speed);
     void steer(SteerDirection direction, int angle);
     void stop();
-    void setLegPosition(int leg, int frame);
-    int legPos[4] = {};
+    void setStartPosition(int leg, int frame);
     int legAmp[4] = {}; // Ignored fro now
     int legSpeed[4] = {};
-    int legDirection[4] = {};
+    int startFrame[4] = {};
     int frameIntervall = 3000; // frameSize for interpolation in microseconds
     int frameNumber = 120; //stepSize in microseconds
+
   protected:
     int legServ[4] = {};
+    int legPos[4] = {};
+    int legDirection[4] = {};
+    bool legStarted[4] = {};
     Adafruit_PWMServoDriver pwm;
     uint8_t servoBackbone;
     unsigned long time;

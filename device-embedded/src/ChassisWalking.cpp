@@ -14,32 +14,39 @@ ChassisWalking::ChassisWalking(uint8_t servoNumRightFront, uint8_t servoNumRight
   legServ[3] = servoNumLeftBack;
   servoBackbone = servoNumBackbone;
   // Set Default Walking Pattern
-  legPos[0] = SERVOMIN+1;
-  legPos[1] = SERVOMAX-1;
-  legPos[2] = SERVOMIN+1;
-  legPos[3] = SERVOMAX-1;
+  startFrame[0] = 0;
+  startFrame[1] = 60;
+  startFrame[2] = 60;
+  startFrame[3] = 0;
   legAmp[0] = 100;
   legAmp[1] = 100;
   legAmp[2] = 100;
   legAmp[3] = 100;
-  legDirection[0] = -1; // Right side negative movement to move to front
-  legDirection[1] = -1; // Right side negative movement to move to front
-  legDirection[2] = 1;
-  legDirection[3] = 1;
   legSpeed[0] = 1;
   legSpeed[1] = 1;
   legSpeed[2] = 1;
   legSpeed[3] = 1;
   // END DEBUG
-  time = micros();
+  reset();
   Serial.println("[OK]");
 }
 
 void ChassisWalking::setStartPosition(int leg, int frame) {
-  if ()
+
 }
 
 void ChassisWalking::reset() {
+  int middle = (int)SERVOMIN + (SERVOMAX-SERVOMIN)*1.0/2;
+  for (int s = 0; s < 4; s++) {
+    legPos[s] = middle;
+    legStarted[s] = false;
+    pwm.setPWM(legServ[s], 0, legPos[s]);
+  }
+  legDirection[0] = -1; // Right side negative movement to move to front
+  legDirection[1] = 1; // Right side negative movement to move to front
+  legDirection[2] = 1;
+  legDirection[3] = -1;
+  //Serial.println(legSpeed[1]);
   time = micros();
   frame = 0;
 }
@@ -77,11 +84,14 @@ void ChassisWalking::steer(SteerDirection direction, int angel) {
 
 void ChassisWalking::stop() {
   //ToDo: set all legs to postion of step 0
+  //if (currentState.moving) {
+    //reset();
+    for (int s = 0; s < 4; s++) {
+      pwm.setPWM(legServ[s], 0, 0);
+    }
+  //
   currentState.moving = false;
-  for (int s = 0; s < 4; s++) {
-    pwm.setPWM(legServ[s], 0, 0);
-  }
-  time = micros();
+
 }
 
 void ChassisWalking::loop(ChassisState *state) {
@@ -94,13 +104,16 @@ void ChassisWalking::loop(ChassisState *state) {
       // check if next step is reached
       for (int s = 0; s < 4; s++) {
         pwm.setPWM(legServ[s], 0, legPos[s]);
-        legPos[s] = legPos[s] + legDirection[s] * legSpeed[s];
-        //Serial.println(legPos[s]);
-        if (legPos[s] > SERVOMAX*legAmp[s]/100 || legPos[s] < SERVOMIN*legAmp[s]/100) {
-          legDirection[s] = legDirection[s]*-1;
+        if (frame >= startFrame[s] || legStarted[s] == true) {
+          legStarted[s] = true;
+          legPos[s] = legPos[s] + legDirection[s] * legSpeed[s];
+          if (legPos[s] > SERVOMAX*legAmp[s]/100 || legPos[s] < SERVOMIN*legAmp[s]/100) {
+            legDirection[s] = legDirection[s]*-1;
+          }
         }
       }
       frame++;
+
       if (frame > frameNumber) {
         frame = 0;
       }
