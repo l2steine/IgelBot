@@ -18,15 +18,12 @@
 */
 
 #include <Arduino.h>
-#include <WiFi101.h>
-#include <aREST.h>
 #include <Modular.h>
 #include <Sonar.h>
 //#include <Chassis.h>
 #include <ChassisWalking.h>
 #include <Vision.h>
 #include <Pickupsystem.h>
-#include <WiFiConfig.h>
 #include <Pins.h>
 
 // VOICE
@@ -56,14 +53,8 @@ ChassisWalking *chassis;
 Vision *vision;
 PickupSystem *pickupSystem;
 
-// Declarations for WiFi API
-WiFiServer* server;
-WiFiClient client;
-int status = WL_IDLE_STATUS;
-aREST rest = aREST();
-// Declare Functions for API
-int start(String command);
-int stop(String command);
+// Plugins
+#include <Api.h>
 
 int lc = 0;
 IgelJobState lastJobState;
@@ -73,49 +64,16 @@ void setup() {
   while ( ! Serial ) {
       delay( 1 );
   }
+
   Serial.println("IgelBot: Booting...");
   sonar = new Sonar(SONAR_TRIGGER_PIN, SONAR_ECHO_PIN, SONAR_MAX_DISTANCE);
   //chassis = new Chassis(MOTOR_RIGHT, MOTOR_LEFT, SERVO_STEER_C1, SERVO_STEER_C2);
-  chassis = new ChassisWalking(SERVO_FRONT_RIGHT, SERVO_FRONT_LEFT, SERVO_BACK_RIGHT, SERVO_BACK_LEFT, SERVO_BACKBONE);
+  chassis = new ChassisWalking(SERVO_FRONT_RIGHT, SERVO_BACK_RIGHT, SERVO_FRONT_LEFT, SERVO_BACK_LEFT, SERVO_BACKBONE);
   vision = new Vision();
   pickupSystem = new PickupSystem(PICKUPSYSTEM_PIN);
-  // Setup the WiFi Connection
-  WiFi.setPins(8,7,4,2);
-  server = new WiFiServer(LISTEN_PORT);
-  rest.function("start",start);
-  rest.function("stop",stop);
-  rest.set_id("IG1000");
-  rest.set_name("Igel 1.0");
-  // Connect to WiFi or create one
-  int cc = 0;
 
-  while (status != WL_CONNECTED || status == WL_AP_LISTENING) {
-    if (cc > 0) {
-      Serial.print("Create new Accespoint: ");
-      Serial.println(ssid_igel);
-      status = WiFi.beginAP(ssid_igel);
-       if (status != WL_AP_LISTENING) {
-         Serial.println("Failed to create Accesspoint");
-       }
-       break;
-    }
-    Serial.print("Attempting to connect to SSID (attempt  ");
-    Serial.print(cc);
-    Serial.print("): ");
-    Serial.println(ssid);
-    status = WiFi.begin(ssid, password);
-    // Wait 10 seconds for connection:
-    delay(1000);
-    cc++;
-  }
-
-  Serial.println("WiFi connected");
-  server->begin();
-  Serial.println("Web Server started");
-  // Print the IP address
-  IPAddress ip = WiFi.localIP();
-  Serial.print("IP Address: ");
-  Serial.println(ip);
+  // Initialze web Api
+  setupApi(WIFI_CS, WIFI_IRQ, WIFI_RST, WIFI_EN, WIFI_LISTEN_PORT);
 
   Serial.println("IgelBot: System started");
   setJobState(IGEL_SEARCH);
@@ -137,24 +95,17 @@ void loop() {
     pickupSystem->release();
     setJobState(IGEL_SEARCH);
   }
-  if (!client) {
-    client = server->available();
-  }
-  else if (client.available()) {
-      rest.handle(client);
-  }
+  loopApi();
 }
 
 /* main Action Start */
-int start(String command) {
+void start() {
     state.stop = false;
-    return 1;
 }
 
 /* main Action Start */
-int stop(String command) {
+void stop() {
     state.stop = true;
-    return 1;
 }
 
 void setJobState(IgelJobState job) {

@@ -9,6 +9,7 @@
 
 #include "Arduino.h"
 #include "Modular.h"
+#include <WiFi101.h>
 #include <ArduinoJson.h>
 
 #define JSONBUFFERSIZE 500 // JSON Buffer Size

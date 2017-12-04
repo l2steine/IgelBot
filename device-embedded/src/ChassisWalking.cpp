@@ -3,29 +3,45 @@
 #include <Wire.h>
 #include <Adafruit_PWMServoDriver.h>
 
-ChassisWalking::ChassisWalking(uint8_t servoNumRightFront, uint8_t servoNumLeftFront, uint8_t servoNumRightBack, uint8_t servoNumLeftBack, uint8_t servoNumBackbone) {
+ChassisWalking::ChassisWalking(uint8_t servoNumRightFront, uint8_t servoNumRightBack, uint8_t servoNumLeftFront,  uint8_t servoNumLeftBack, uint8_t servoNumBackbone) {
   Serial.print("Init Chassis... ");
   pwm = Adafruit_PWMServoDriver(0x40);
   pwm.begin();
   pwm.setPWMFreq(60);  // Analog servos run at ~60 Hz updates
-  servoRF = servoNumRightFront;
-  servoLF = servoNumLeftFront;
-  servoRB = servoNumRightBack;
-  servoLB = servoNumLeftBack;
+  legServ[0] = servoNumRightFront;
+  legServ[1] = servoNumRightBack;
+  legServ[2] = servoNumLeftFront;
+  legServ[3] = servoNumLeftBack;
   servoBackbone = servoNumBackbone;
-  // DEBUG
-  setWalkingPattern(currentWalkingPattern);
+  // Set Default Walking Pattern
+  legPos[0] = SERVOMIN+1;
+  legPos[1] = SERVOMAX-1;
+  legPos[2] = SERVOMIN+1;
+  legPos[3] = SERVOMAX-1;
+  legAmp[0] = 100;
+  legAmp[1] = 100;
+  legAmp[2] = 100;
+  legAmp[3] = 100;
+  legDirection[0] = -1; // Right side negative movement to move to front
+  legDirection[1] = -1; // Right side negative movement to move to front
+  legDirection[2] = 1;
+  legDirection[3] = 1;
+  legSpeed[0] = 1;
+  legSpeed[1] = 1;
+  legSpeed[2] = 1;
+  legSpeed[3] = 1;
   // END DEBUG
   time = micros();
-  stepTime = micros();
   Serial.println("[OK]");
 }
 
-void ChassisWalking::setWalkingPattern(WalikingPattern pattern) {
-  currentWalkingPattern = pattern;
-  stepSize = currentWalkingPattern.period/STEPS_PER_MEASURE*1000;
-  Serial.print("Step Size: ");
-  Serial.println(stepSize);
+void ChassisWalking::setStartPosition(int leg, int frame) {
+  if ()
+}
+
+void ChassisWalking::reset() {
+  time = micros();
+  frame = 0;
 }
 
 void ChassisWalking::forward() {
@@ -62,23 +78,10 @@ void ChassisWalking::steer(SteerDirection direction, int angel) {
 void ChassisWalking::stop() {
   //ToDo: set all legs to postion of step 0
   currentState.moving = false;
-  pwm.setPWM(servoRF, 0, 0);
-  pwm.setPWM(servoLF, 0, 0);
-  pwm.setPWM(servoRB, 0, 0);
-  pwm.setPWM(servoLB, 0, 0);
-  time = micros();
-}
-
-double ChassisWalking::calculateSlope(int steps[], int step) {
-  // this last defined step
-  int s1 = step;
-  int s2 = step+1;
-  if (s2 >= STEPS_PER_MEASURE) {
-    s2 = 0;
+  for (int s = 0; s < 4; s++) {
+    pwm.setPWM(legServ[s], 0, 0);
   }
-  double slope = 0;
-  slope = (steps[s2]-steps[s1])*1.0/stepSize;
-  return slope;
+  time = micros();
 }
 
 void ChassisWalking::loop(ChassisState *state) {
@@ -87,28 +90,20 @@ void ChassisWalking::loop(ChassisState *state) {
 
   if (currentState.moving) {
     //Chekc if next frame is reached
-    if (time + frameSize < micros()) {
+    if (time + frameIntervall < micros()) {
       // check if next step is reached
-      if (stepTime + stepSize < micros()) {
-        // calculate new slope for each leg
-        step++;
-        if (step >= STEPS_PER_MEASURE) {
-          step = 0;
+      for (int s = 0; s < 4; s++) {
+        pwm.setPWM(legServ[s], 0, legPos[s]);
+        legPos[s] = legPos[s] + legDirection[s] * legSpeed[s];
+        //Serial.println(legPos[s]);
+        if (legPos[s] > SERVOMAX*legAmp[s]/100 || legPos[s] < SERVOMIN*legAmp[s]/100) {
+          legDirection[s] = legDirection[s]*-1;
         }
-        // interplaote slope between servoMin and ServoMax
-        slopeRF = calculateSlope(currentWalkingPattern.rf, step);
-        slopeLF = calculateSlope(currentWalkingPattern.lf, step);
-        slopeRB = calculateSlope(currentWalkingPattern.rb, step);
-        slopeLB = calculateSlope(currentWalkingPattern.lb, step);
-        stepTime = time;
-        //Serial.print("Step: ");
-        //Serial.println(step);
       }
-      int dt = time - stepTime;
-      pwm.setPWM(servoRF, 0, currentWalkingPattern.rfPwm0 + dt * (slopeRF/100) * currentWalkingPattern.rfPwm100);
-      pwm.setPWM(servoLF, 0, currentWalkingPattern.lfPwm0 + dt * (slopeLF/100) * currentWalkingPattern.lfPwm100);
-      pwm.setPWM(servoRB, 0, currentWalkingPattern.rbPwm0 + dt * (slopeRB/100) * currentWalkingPattern.rbPwm100);
-      pwm.setPWM(servoLB, 0, currentWalkingPattern.lbPwm0 + dt * (slopeLB/100) * currentWalkingPattern.lbPwm100);
+      frame++;
+      if (frame > frameNumber) {
+        frame = 0;
+      }
       time = micros();
     }
   }

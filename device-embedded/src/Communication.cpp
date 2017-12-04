@@ -1,8 +1,9 @@
 #include <Communication.h>
-#include <ArduinoJson.h>
+#include <WiFi101.h>
 
 Communication::Communication() {
   Serial.print("Init Communication System ...");
+  
   Serial.println(") [OK]");
 }
 

@@ -40,6 +40,13 @@
 // Vision Pins
 #define VISION_SS 19
 
+// WiFi setPins
+#define WIFI_CS 8
+#define WIFI_IRQ 7
+#define WIFI_RST 4
+#define WIFI_EN 2
+#define WIFI_LISTEN_PORT 80
+
 ////////////////////////////////////////////////////////////////////
 // General Igel specific Configuraiton (Strategy)
 //
