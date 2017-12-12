@@ -13,9 +13,9 @@
 #include <WiFiConfig.h>
 #include <ChassisWalking.h>
 // Thanks to : https://github.com/apolukhin/html_inside_cpp
-#include <webapp/html_begin.pp> // header from this repo
+//#include <webapp/html_begin.pp> // header from this repo
 #include <webapp/index.html>
-#include <webapp/html_end.pp>   // header from this repo
+//#include <webapp/html_end.pp>   // header from this repo
 
 // Declarations for WiFi API
 WiFiServer* server;
@@ -106,6 +106,7 @@ void printHTMLHeaders() {
 
 // General
 String handleRequest(String req) {
+  //Serial.print("New Request: ");
   //Serial.println(req);
   int sep = req.indexOf("/");
   String method = req.substring(0,sep-1);
@@ -156,8 +157,20 @@ String handleGET(String url, String params) {
     printJSONHeaders();
     return "done";
   }
+  if (url == "/favicon.ico") {
+    printJSONHeaders();
+    return "done";
+  }
+  //Serial.println("Start HTML");
   printHTMLHeaders();
-  return html_index;
+  //Serial.println(html_index);
+  //return "<html><h1>It Works!</h1></html>";
+  /*for ( char* it=html_index.begin(); it!=html_index.end(); ++it)
+    client.write(*it);*/
+  int CHUNK_LEN = 50;
+  for (int i = 0; i < html_index.length(); i += CHUNK_LEN)
+    client.print(html_index.substring(i, i + CHUNK_LEN));
+  return "";
 }
 
 
