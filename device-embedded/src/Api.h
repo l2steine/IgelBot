@@ -12,6 +12,10 @@
 #include <ArduinoJson.h>
 #include <WiFiConfig.h>
 #include <ChassisWalking.h>
+// Thanks to : https://github.com/apolukhin/html_inside_cpp
+#include <webapp/html_begin.pp> // header from this repo
+#include <webapp/index.html>
+#include <webapp/html_end.pp>   // header from this repo
 
 // Declarations for WiFi API
 WiFiServer* server;
@@ -80,17 +84,23 @@ void loopApi() {
       //handle Request
       String response = handleRequest(req);
       // send response
-      printHeaders();
       client.print(response.c_str());
       client.stop();
     }
   }
 }
 
-void printHeaders() {
+void printJSONHeaders() {
   //ToDo: Set proper Headers here
   client.println("HTTP/1.1 200 OK");
-  client.println("Content-Type: text/plain");
+  client.println("Content-Type: text/json");
+  client.println("");
+}
+
+void printHTMLHeaders() {
+  //ToDo: Set proper Headers here
+  client.println("HTTP/1.1 200 OK");
+  client.println("Content-Type: text/html");
   client.println("");
 }
 
@@ -138,11 +148,16 @@ String handlePOST(String url, String content) {
 String handleGET(String url, String params) {
   if (url == "/start") {
     start();
+    printJSONHeaders();
+    return "done";
   }
   if (url == "/stop") {
     stop();
+    printJSONHeaders();
+    return "done";
   }
-  return "done";
+  printHTMLHeaders();
+  return html_index;
 }
 
 
