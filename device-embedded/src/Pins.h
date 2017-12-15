@@ -38,7 +38,8 @@
 #define LISTEN_PORT 80
 
 // Vision Pins
-#define VISION_SS 19
+#define VISION_I2C_SCL 21
+#define VISION_I2C_SDA 20
 
 // WiFi setPins
 #define WIFI_CS 8
@@ -50,9 +51,11 @@
 ////////////////////////////////////////////////////////////////////
 // General Igel specific Configuraiton (Strategy)
 //
-#define SONAR_MAX_DISTANCE 200
-#define MIN_OBJECT_DISTANCE_CM 10
-#define TARGET_DEVIATION_TOLARANCE 100
-#define TARGET_NAV_TOLARANCE 5
-#define TARGET_DISTANCE_TOLARANCE 190
+#define SONAR_MAX_DISTANCE 1000
+#define MIN_OBJECT_DISTANCE_CM 7
+// Target Dectcion
+#define TARGET_DEVIATION_TOLARANCE 200
+#define TARGET_DISTANCE_TOLARANCE 1000
+// Naviagion Controll
+#define TARGET_NAV_TOLARANCE 10
 #define TARGET_CONTROL_P 1.59 // Linear transformation from deviation in pixesl (max=160) to servo frequency (max=255)

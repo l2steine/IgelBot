@@ -77,25 +77,33 @@ void setup() {
   setupApi(WIFI_CS, WIFI_IRQ, WIFI_RST, WIFI_EN, WIFI_LISTEN_PORT);
 
   Serial.println("IgelBot: System started");
-  setJobState(IGEL_TRAIN);
+
+  setJobState(IGEL_SEARCH);
+  //setJobState(IGEL_TRAIN);
   stop();
 }
 
 void loop() {
-
   if(!state.stop) {
-    // Loop components
-    //sonar->loop(&state.sonar);
-    chassis->forward();
-    chassis->loop(&state.chassis);
-    //vision->loop(&state.vision);
-    //pickupSystem->loop(&state.pickup);
-    // Run Actions based on strategy
-    //strategy();
+    if (state.job == IGEL_TRAIN) {
+      chassis->forward();
+      chassis->loop(&state.chassis);
+    } else {
+      // Loop components
+      sonar->loop(&state.sonar);
+      chassis->loop(&state.chassis);
+      vision->loop(&state.vision);
+      pickupSystem->loop(&state.pickup);
+      // Run Actions based on strategy
+      strategy();
+    }
+
   } else {
     chassis->stop();
     pickupSystem->release();
-    setJobState(IGEL_SEARCH);
+    if (state.job != IGEL_TRAIN) {
+      setJobState(IGEL_SEARCH);
+    }
   }
   loopApi();
 }
@@ -131,7 +139,7 @@ void strategy() {
     Serial.println("Sonar: No more obstacle");
     setJobState(RESUME_LAST);
   }
-  if (state.sonar.obstacelDistance <= MIN_OBJECT_DISTANCE_CM && state.chassis.moving == true) {
+  if (state.sonar.obstacelDistance <= MIN_OBJECT_DISTANCE_CM && state.job != IGEL_OBSTACLE) {
     Serial.println("Sonar: Obstacle found");
     setJobState(IGEL_OBSTACLE);
     chassis->stop();
@@ -144,10 +152,10 @@ void strategy() {
   if (state.job == IGEL_DROP)   { exeJobDrop();   }
   lc++;
   if (lc == 100) {
-    /*Serial.println(state.job);s
     Serial.print("Track (dist, dev):");
     Serial.print(state.vision.targetDistance);
-    Serial.print(" , ");*/
+    Serial.print(" , ");
+    Serial.print(state.vision.targetDeviation);
     lc = 0;
   }
 }

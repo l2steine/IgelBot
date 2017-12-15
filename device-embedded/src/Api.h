@@ -31,6 +31,7 @@ void printHeaders();
 //ChassisWalking *chassis;
 void start();
 void stop();
+void setJobState(IgelJobState job);
 String handlePOST(String url, String content);
 String handleGET(String url, String params);
 //////////////////////////////////////////////////
@@ -131,15 +132,19 @@ String handlePOST(String url, String content) {
     DynamicJsonBuffer jsonBuffer(bufferSize);
     JsonObject& root = jsonBuffer.parseObject(content);
     chassis->frameIntervall = root["frameIntervall"];
-
+    chassis->frameNumber = root["frameNumber"];
+    chassis->servomin = root["servomin"];
+    chassis->servomax = root["servomax"];
     // Leg specific Settings
-    JsonArray& StartPosistons = root["StartPosistons"];
-    JsonArray& Amplicifations = root["Amplicifations"];
-    JsonArray& Speed = root["Speed"];
+    JsonArray& StartPosistons = root["startPosistons"];
+    JsonArray& Amplicifations = root["amplicifations"];
+    JsonArray& Speed = root["speed"];
+    JsonArray& Trim = root["trim"];
     for (int s = 0; s < 4; s++) {
       chassis->startFrame[s] = StartPosistons[s];
       chassis->legAmp[s] = Amplicifations[s];
       chassis->legSpeed[s] = Speed[s];
+      chassis->legTrim[s] = Trim[s];
     }
     chassis->reset();
   }
@@ -154,6 +159,16 @@ String handleGET(String url, String params) {
   }
   if (url == "/stop") {
     stop();
+    printJSONHeaders();
+    return "done";
+  }
+  if (url == "/mode/train") {
+    setJobState(IGEL_TRAIN);
+    printJSONHeaders();
+    return "done";
+  }
+  if (url == "/mode/search") {
+    setJobState(IGEL_SEARCH);
     printJSONHeaders();
     return "done";
   }

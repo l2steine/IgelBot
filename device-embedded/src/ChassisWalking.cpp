@@ -15,8 +15,8 @@ ChassisWalking::ChassisWalking(uint8_t servoNumRightFront, uint8_t servoNumRight
   servoBackbone = servoNumBackbone;
   // Set Default Walking Pattern
   startFrame[0] = 0;
-  startFrame[1] = 60;
-  startFrame[2] = 60;
+  startFrame[1] = 100;
+  startFrame[2] = 100;
   startFrame[3] = 0;
   legAmp[0] = 100;
   legAmp[1] = 100;
@@ -26,7 +26,11 @@ ChassisWalking::ChassisWalking(uint8_t servoNumRightFront, uint8_t servoNumRight
   legSpeed[1] = 1;
   legSpeed[2] = 1;
   legSpeed[3] = 1;
-  // END DEBUG
+  legTrim[0] = 80;
+  legTrim[1] = 0;
+  legTrim[2] = 0;
+  legTrim[3] = -30;
+  currentSteer = STEER_STRAIGHT;
   reset();
   Serial.println("[OK]");
 }
@@ -35,17 +39,21 @@ void ChassisWalking::setStartPosition(int leg, int frame) {
 
 }
 
+int ChassisWalking::getMiddlePos() {
+  return (int)servomin + (servomax-servomin)*1.0/2;
+}
+
 void ChassisWalking::reset() {
-  int middle = (int)SERVOMIN + (SERVOMAX-SERVOMIN)*1.0/2;
+  int middle = getMiddlePos();
   for (int s = 0; s < 4; s++) {
     legPos[s] = middle;
     legStarted[s] = false;
     pwm.setPWM(legServ[s], 0, legPos[s]);
   }
   legDirection[0] = -1; // Right side negative movement to move to front
-  legDirection[1] = 1; // Right side negative movement to move to front
+  legDirection[1] = -1; // Right side negative movement to move to front
   legDirection[2] = 1;
-  legDirection[3] = -1;
+  legDirection[3] = 1;
   //Serial.println(legSpeed[1]);
   time = micros();
   frame = 0;
@@ -69,16 +77,31 @@ void ChassisWalking::backward(int speed) {
 }
 
 void ChassisWalking::steer(SteerDirection direction, int angel) {
-  switch (direction) {
-    case STEER_LEFT:
-
-      break;
-    case STEER_RIGHT:
-
-      break;
-    case STEER_STRAIGHT:
-
-      break;
+  if (currentSteer != direction) {
+    currentSteer = direction;
+    switch (direction) {
+      case STEER_LEFT:
+        startFrame[0] = 50;
+        startFrame[1] = 150;
+        startFrame[2] = 0;
+        startFrame[3] = 100;
+        reset();
+        break;
+      case STEER_RIGHT:
+        startFrame[0] = 0;
+        startFrame[1] = 100;
+        startFrame[2] = 50;
+        startFrame[3] = 150;
+        reset();
+        break;
+      case STEER_STRAIGHT:
+        startFrame[0] = 0;
+        startFrame[1] = 100;
+        startFrame[2] = 100;
+        startFrame[3] = 0;
+        reset();
+        break;
+    }
   }
 }
 
@@ -103,11 +126,13 @@ void ChassisWalking::loop(ChassisState *state) {
     if (time + frameIntervall < micros()) {
       // check if next step is reached
       for (int s = 0; s < 4; s++) {
-        pwm.setPWM(legServ[s], 0, legPos[s]);
+        //pwm.setPWM(legServ[s],0, legPos[s]);
+        int trimPos = legPos[s] + legTrim[s];
+        pwm.setPWM(legServ[s], 0, trimPos);
         if (frame >= startFrame[s] || legStarted[s] == true) {
           legStarted[s] = true;
           legPos[s] = legPos[s] + legDirection[s] * legSpeed[s];
-          if (legPos[s] > SERVOMAX*legAmp[s]/100 || legPos[s] < SERVOMIN*legAmp[s]/100) {
+          if (legPos[s] > servomax*legAmp[s]*1.0/100 || legPos[s] < servomin*legAmp[s]*1.0/100) {
             legDirection[s] = legDirection[s]*-1;
           }
         }

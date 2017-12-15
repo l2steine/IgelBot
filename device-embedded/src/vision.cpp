@@ -52,5 +52,5 @@ void Vision::loop(VisionState *state) {
   }
   state->targetDeviation = currentState.targetDeviation;
   state->targetDistance = currentState.targetDistance;
-  //Serial.print(state->targetDistance = state->targetDistance);
+  //Serial.print(state->targetDistance);
 }

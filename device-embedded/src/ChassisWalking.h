@@ -8,7 +8,6 @@
 
 #define SERVOMIN  200  // this is the 'minimum' pulse length count (out of 4096)
 #define SERVOMAX  320  // this is the 'maximum' pulse length count (out of 4096)
-#define STEPS_PER_MEASURE 16
 
 struct ChassisState {
   int speed = 100;
@@ -40,10 +39,15 @@ class ChassisWalking : public Component
     int legAmp[4] = {}; // Ignored fro now
     int legSpeed[4] = {};
     int startFrame[4] = {};
+    int legTrim[4] = {};
     int frameIntervall = 3000; // frameSize for interpolation in microseconds
-    int frameNumber = 120; //stepSize in microseconds
+    int frameNumber = 200; //stepSize in microseconds
+    int servomin = 200;
+    int servomax = 300;
 
   protected:
+    SteerDirection currentSteer;
+    int getMiddlePos();
     int legServ[4] = {};
     int legPos[4] = {};
     int legDirection[4] = {};
@@ -52,7 +56,6 @@ class ChassisWalking : public Component
     uint8_t servoBackbone;
     unsigned long time;
     int frame = 0;
-
 };
 
 #endif
