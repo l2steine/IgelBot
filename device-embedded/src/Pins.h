@@ -55,7 +55,7 @@
 #define MIN_OBJECT_DISTANCE_CM 7
 // Target Dectcion
 #define TARGET_DEVIATION_TOLARANCE 200
-#define TARGET_DISTANCE_TOLARANCE 1000
+#define TARGET_DISTANCE_TOLARANCE 180    // Minal Distance from Target (below this limmit, the pick up process starts)
 // Naviagion Controll
-#define TARGET_NAV_TOLARANCE 10
+#define TARGET_NAV_TOLARANCE 15
 #define TARGET_CONTROL_P 1.59 // Linear transformation from deviation in pixesl (max=160) to servo frequency (max=255)

@@ -35,15 +35,18 @@ class ChassisWalking : public Component
     void backward(int speed);
     void steer(SteerDirection direction, int angle);
     void stop();
+    void down();
+    void up();
     void setStartPosition(int leg, int frame);
     int legAmp[4] = {}; // Ignored fro now
-    int legSpeed[4] = {};
+    float legSpeed[4] = {};
     int startFrame[4] = {};
     int legTrim[4] = {};
     int frameIntervall = 3000; // frameSize for interpolation in microseconds
     int frameNumber = 200; //stepSize in microseconds
     int servomin = 200;
     int servomax = 300;
+    int downpos = 80;
 
   protected:
     SteerDirection currentSteer;

@@ -7,7 +7,7 @@
 #include <SPI.h>
 
 #define VISION_MAX_X 320
-#define VISION_MAX_Y 200
+#define VISION_MAX_Y 200 // 0 is top, 200 is bottom
 #define TARGET_LOST_COUNT 10
 
 struct VisionState {

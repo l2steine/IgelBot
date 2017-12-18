@@ -101,7 +101,7 @@ void loop() {
   } else {
     chassis->stop();
     pickupSystem->release();
-    if (state.job != IGEL_TRAIN) {
+    if (state.job != IGEL_TRAIN and state.job != IGEL_SEARCH) {
       setJobState(IGEL_SEARCH);
     }
   }
@@ -126,8 +126,8 @@ void setJobState(IgelJobState job) {
     lastJobState = state.job;
     state.job = job;
   }
-  //Serial.print("New Job: ");
-  //Serial.println (job);
+  Serial.print("New Job: ");
+  Serial.println (state.job);
 }
 
 /* Run Component actions based on the current state */
@@ -155,7 +155,7 @@ void strategy() {
     Serial.print("Track (dist, dev):");
     Serial.print(state.vision.targetDistance);
     Serial.print(" , ");
-    Serial.print(state.vision.targetDeviation);
+    Serial.println(state.vision.targetDeviation);
     lc = 0;
   }
 }
@@ -169,44 +169,67 @@ void exeJobSearch() {
   }
 }
 
+#define STEER_INERTIA 200
+int steerCount=0;
+SteerDirection currentSteer;
+SteerDirection dectedSteer;
+
+
+// Tell the Chassis to steer with a certain intertia
+void steerControler(SteerDirection steer) {
+  if (steer != currentSteer) {
+    if (dectedSteer == steer) {
+      steerCount++;
+    }
+    if (steerCount > STEER_INERTIA) {
+      chassis->steer(steer, 1);
+      currentSteer = steer;
+      steerCount=0;
+      Serial.println(steer);
+    }
+    dectedSteer = steer;
+  }
+}
+
 void exeJobTrack() {
   // Follow Target
   chassis->forward(100);
   // Navigae to Target
   if (state.vision.targetDeviation > TARGET_NAV_TOLARANCE) {
-      chassis->steer(STEER_RIGHT, state.vision.targetDeviation*TARGET_CONTROL_P);
+    steerControler(STEER_RIGHT);
   }
   if (state.vision.targetDeviation < TARGET_NAV_TOLARANCE*(-1)) {
-      chassis->steer(STEER_LEFT, state.vision.targetDeviation*TARGET_CONTROL_P*(-1));
+    steerControler(STEER_LEFT);
   }
-  if (state.vision.targetDeviation >= TARGET_NAV_TOLARANCE && state.vision.targetDeviation <= TARGET_NAV_TOLARANCE) {
-      chassis->steer(STEER_STRAIGHT, 0);
+  if (state.vision.targetDeviation <= TARGET_NAV_TOLARANCE && state.vision.targetDeviation >= TARGET_NAV_TOLARANCE*(-1)) {
+      steerControler(STEER_STRAIGHT);
   }
-  // Target found
-  if (state.vision.targetDistance > TARGET_DISTANCE_TOLARANCE &&
-      state.vision.targetDeviation < TARGET_DEVIATION_TOLARANCE &&
-      state.vision.targetDeviation > TARGET_DEVIATION_TOLARANCE*(-1)
+  // Target found (Deviation in Target and Traget below mimial Tolerance)
+  if (state.vision.targetDistance > TARGET_DISTANCE_TOLARANCE && (
+      state.vision.targetDeviation < TARGET_DEVIATION_TOLARANCE ||
+      state.vision.targetDeviation > TARGET_DEVIATION_TOLARANCE*(-1))
   ) {
-    Serial.println("Track: target found");
+    Serial.println("Track: arrived at target");
     setJobState(IGEL_PICK);
+    return;
   }
-  // Target lost
-  if ((state.vision.targetDistance > TARGET_DISTANCE_TOLARANCE &&
-      state.vision.targetDeviation > TARGET_DEVIATION_TOLARANCE &&
+  // Target lost: too far right or too far lest or not in camara (targetDistance = -1)
+  if (( state.vision.targetDeviation > TARGET_DEVIATION_TOLARANCE ||
       state.vision.targetDeviation < TARGET_DEVIATION_TOLARANCE*(-1)) ||
       state.vision.targetDistance < 0
   ) {
       Serial.println("Track: target lost");
       setJobState(IGEL_SEARCH);
+      return;
   }
 }
 
 void exeJobPick() {
   Serial.println("Pickup Target");
   vision->reset();
-  chassis->forward(65);
-  delay(900);
-  chassis->stop();
+  chassis->forward();
+  delay(2000);
+  chassis->down();
   pickupSystem->pick();
   delay(2000);
   setJobState(IGEL_GOHOME);
@@ -215,9 +238,10 @@ void exeJobPick() {
 void exeJobGoHome() {
   // For now, just wait 2 seconds
   Serial.println("Go Home");
+  chassis->up();
   chassis->steer(STEER_STRAIGHT, 0);
-  chassis->forward(200);
-  delay(1000);
+  chassis->forward();
+  delay(2000);
   chassis->stop();
   delay(2000);
   setJobState(IGEL_DROP);
