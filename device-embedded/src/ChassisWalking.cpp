@@ -27,9 +27,9 @@ ChassisWalking::ChassisWalking(uint8_t servoNumRightFront, uint8_t servoNumRight
   legSpeed[2] = 1;
   legSpeed[3] = 1;
   legTrim[0] = 80;
-  legTrim[1] = -15;
-  legTrim[2] = 0;
-  legTrim[3] = 15;
+  legTrim[1] = -10;
+  legTrim[2] = 25;
+  legTrim[3] = 35;
   currentSteer = STEER_STRAIGHT;
   reset();
   Serial.println("[OK]");
@@ -43,12 +43,16 @@ int ChassisWalking::getMiddlePos() {
   return (int)servomin + (servomax-servomin)*1.0/2;
 }
 
+int ChassisWalking::trim(int pos, int leg) {
+  return pos + legTrim[leg];
+}
+
 void ChassisWalking::reset() {
   int middle = getMiddlePos();
   for (int s = 0; s < 4; s++) {
     legPos[s] = middle;
     legStarted[s] = false;
-    pwm.setPWM(legServ[s], 0, legPos[s]);
+    pwm.setPWM(legServ[s], 0, trim(legPos[s], s));
   }
   legDirection[0] = -1; // Right side negative movement to move to front
   legDirection[1] = -1; // Right side negative movement to move to front
@@ -126,7 +130,7 @@ void ChassisWalking::down() {
   for (int d = 0; d < downpos; d++ ) {
     for (int s = 0; s < 4; s++) {
       legPos[s] = middle + d * legDirection[s];
-      pwm.setPWM(legServ[s], 0, legPos[s]);
+      pwm.setPWM(legServ[s], 0, trim(legPos[s], s));
       legStarted[s] = false;
       delay(10);
     }
@@ -143,7 +147,7 @@ void ChassisWalking::up() {
   for (int d = 0; d < downpos; d++ ) {
     for (int s = 0; s < 4; s++) {
       legPos[s] = middle + (downpos - d) * legDirection[s];
-      pwm.setPWM(legServ[s], 0, legPos[s]);
+      pwm.setPWM(legServ[s], 0, trim(legPos[s], s));
       legStarted[s] = false;
       delay(10);
     }
@@ -159,10 +163,10 @@ void ChassisWalking::loop(ChassisState *state) {
     if (time + frameIntervall < micros()) {
       // check if next step is reached
       for (int s = 0; s < 4; s++) {
-        //pwm.setPWM(legServ[s],0, legPos[s]);
-        int trimPos = legPos[s] + legTrim[s];
-        pwm.setPWM(legServ[s], 0, trimPos);
-        if (frame >= startFrame[s] || legStarted[s] == true) {
+        pwm.setPWM(legServ[s], 0, trim(legPos[s], s));
+        // Calculate the number of frams of a step in the next interval
+        int overlap = startFrame[s] + legAmp[s] * 1.0 / legSpeed[s] * (servomax - servomin) - frameNumber;
+        if (frame >= startFrame[s] || (frame < overlap && legStarted[s] == true)) { //||
           legStarted[s] = true;
           legPos[s] = (int)(legPos[s] + legDirection[s] * legSpeed[s]);
           if (legPos[s] > servomax*legAmp[s]*1.0/100 || legPos[s] < servomin*legAmp[s]*1.0/100) {

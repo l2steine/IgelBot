@@ -62,9 +62,9 @@ IgelJobState lastJobState;
 
 void setup() {
   Serial.begin(9600);
-  /*while ( ! Serial ) {
+  while ( ! Serial ) {
       delay( 1 );
-  }*/
+  }
 
   Serial.println("IgelBot: Booting...");
   sonar = new Sonar(SONAR_TRIGGER_PIN, SONAR_ECHO_PIN, SONAR_MAX_DISTANCE);
@@ -78,8 +78,8 @@ void setup() {
 
   Serial.println("IgelBot: System started");
 
-  setJobState(IGEL_SEARCH);
-  //setJobState(IGEL_TRAIN);
+  //setJobState(IGEL_SEARCH);
+  setJobState(IGEL_TRAIN);
   stop();
 }
 

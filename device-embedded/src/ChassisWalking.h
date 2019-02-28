@@ -44,13 +44,14 @@ class ChassisWalking : public Component
     int legTrim[4] = {};
     int frameIntervall = 3000; // frameSize for interpolation in microseconds
     int frameNumber = 200; //stepSize in microseconds
-    int servomin = 200;
-    int servomax = 300;
-    int downpos = 80;
+    int servomin = 250;
+    int servomax = 350;
+    int downpos = 90;
 
   protected:
     SteerDirection currentSteer;
     int getMiddlePos();
+    int trim(int pos, int leg);
     int legServ[4] = {};
     int legPos[4] = {};
     int legDirection[4] = {};
