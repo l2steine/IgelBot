@@ -1,0 +1,34 @@
+-IC:\Users\Stefa\.platformio\packages\framework-arduinosam\cores\adafruit
+-IC:\Users\Stefa\.platformio\packages\framework-arduinosam\system\samd\CMSIS\CMSIS\Include
+-IC:\Users\Stefa\.platformio\packages\framework-arduinosam\system\samd\CMSIS-Atmel\CMSIS\Device\ATMEL
+-IC:\Users\Stefa\.platformio\packages\framework-arduinosam\variants\feather_m0
+-IC:\Users\Stefa\.platformio\lib\Adafruit Motor Shield V2 Library_ID783
+-IC:\Users\Stefa\.platformio\lib\Adafruit Motor Shield V2 Library_ID783\utility
+-IC:\Users\Stefa\.platformio\packages\framework-arduinosam\libraries\__cores__\adafruit\Wire
+-IC:\Users\Stefa\.platformio\packages\framework-arduinosam\libraries\__cores__\adafruit\HID
+-IC:\Users\Stefa\.platformio\packages\framework-arduinosam\libraries\__cores__\adafruit\I2S\src
+-IC:\Users\Stefa\.platformio\packages\framework-arduinosam\libraries\__cores__\adafruit\SAMD_AnalogCorrection\src
+-IC:\Users\Stefa\.platformio\packages\framework-arduinosam\libraries\__cores__\adafruit\SDU\src
+-IC:\Users\Stefa\.platformio\packages\framework-arduinosam\libraries\__cores__\adafruit\SPI
+-IC:\Users\Stefa\.platformio\packages\framework-arduinosam\libraries\__cores__\adafruit\USBHost\src
+-IC:\Users\Stefa\.platformio\packages\toolchain-gccarmnoneeabi\arm-none-eabi\include
+-IC:\Users\Stefa\.platformio\packages\toolchain-gccarmnoneeabi\arm-none-eabi\include\c++\4.8.4
+-IC:\Users\Stefa\.platformio\packages\toolchain-gccarmnoneeabi\arm-none-eabi\include\c++\4.8.4\arm-none-eabi
+-IC:\Users\Stefa\.platformio\packages\toolchain-gccarmnoneeabi\lib\gcc\arm-none-eabi\4.8.4\include
+-IC:\Users\Stefa\.platformio\packages\toolchain-gccarmnoneeabi\lib\gcc\arm-none-eabi\4.8.4\include-fixed
+-IC:\Users\Stefa\.platformio\packages\tool-unity
+-IC:\Users\Stefa\Google Drive\HSR\Bachelorarbeit\Software\Arduino\EncoderTest_Marty\include
+-IC:\Users\Stefa\Google Drive\HSR\Bachelorarbeit\Software\Arduino\EncoderTest_Marty\src
+-DPLATFORMIO=30604
+-DARDUINO_ARCH_SAMD
+-DARDUINO_SAMD_ZERO
+-DARDUINO_SAMD_FEATHER_M0
+-DARM_MATH_CM0PLUS
+-D__SAMD21G18A__
+-DF_CPU=48000000L
+-DUSBCON
+-DARDUINO=10805
+-DUSB_VID=0x239A
+-DUSB_PID=0x800B
+-DUSB_PRODUCT="Adafruit Feather M0"
+-DUSB_MANUFACTURER="Adafruit"
