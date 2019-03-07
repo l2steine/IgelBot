@@ -1,22 +1,18 @@
 #include <Arduino.h>
 #include <Wire.h>
 #include <Adafruit_MotorShield.h>
+#include <Encoder.h>
 
 #define M1 14
 #define PIN_A 15
 #define PIN_B 16
 #define PIN_I 17
 
-int val = 0;
-int encPos = 0;
-int ipeaks = 0;
-int encPinALast = LOW;
-int encPinILast = LOW;
-int a = LOW;
-int i = LOW;
-int turns = 0;
+//#define DEBUG
+
 Adafruit_MotorShield AFMS = Adafruit_MotorShield();
 Adafruit_DCMotor *myMotor = AFMS.getMotor(1);
+Encoder TestEnc(PIN_A, PIN_B);
 
 
 void setup() {
@@ -27,30 +23,22 @@ Serial.begin(9600);
   }
   Serial.println("Ready");
   pinMode(M1, OUTPUT);
-  pinMode(PIN_A, INPUT);
-  pinMode(PIN_B, INPUT);
-  pinMode(PIN_I, INPUT);
+
   AFMS.begin();
-  myMotor->setSpeed(40);
+  myMotor->setSpeed(30);
   myMotor->run(FORWARD);
 }
 
+long positionTestEnc = 100;
+long newPos;
 
 void loop() {
   // put your main code here, to run repeatedly:
-a = digitalRead(PIN_A);
-  i = digitalRead(PIN_I);
-  if ((encPinILast == LOW) &&( i == HIGH)) {
-    Serial.println(encPos);
-    encPos = 0;
-    turns++;
-    //Serial.print (turns);
-    //Serial.print (" / ");
+  long newPos;
+newPos = TestEnc.read();
+if (newPos != positionTestEnc){
+  Serial.print("Position = ");
+  Serial.println(newPos);
+  positionTestEnc = newPos;
   }
-  if ((encPinALast == LOW) && (a == HIGH)) {
-    if (digitalRead(PIN_B) == LOW) {
-      encPos++;
-    } else {
-      encPos--;
-    }
-  }
+}
