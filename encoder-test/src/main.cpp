@@ -5,9 +5,9 @@
 #include <Encoder.h>
 
 #define M0 14
-#define PIN_EN1A 15
+#define PIN_EN1A 17
 #define PIN_EN1B 16
-#define PIN_EN1I 17
+#define PIN_EN1I 15
 #define PIN_EN2A 18
 #define PIN_EN2B 19
 #define PIN_EN2I 24
@@ -20,14 +20,12 @@
 
 //#define DEBUG
 Adafruit_MotorShield AFMS = Adafruit_MotorShield();
-Adafruit_DCMotor *hintenL = AFMS.getMotor(1);
-Adafruit_DCMotor *vorneL = AFMS.getMotor(2);
+Adafruit_DCMotor *vorneL = AFMS.getMotor(1);
+/*Adafruit_DCMotor *hintenL = AFMS.getMotor(2);
 Adafruit_DCMotor *hintenR = AFMS.getMotor(3);
-Adafruit_DCMotor *vorneR = AFMS.getMotor(4);
-Encoder EncVL(PIN_EN1A, PIN_EN1B);
-Encoder EncVR(PIN_EN2A, PIN_EN2B);
-Encoder EncHL(PIN_EN3A, PIN_EN3B);
-Encoder EncHR(PIN_EN4A, PIN_EN4B);
+Adafruit_DCMotor *vorneR = AFMS.getMotor(4);*/
+
+int i;
 
 void setup() {
   // put your setup code here, to run once:
@@ -39,15 +37,29 @@ Serial.begin(9600);
   pinMode(M0, OUTPUT);
 
   AFMS.begin();
-  vorneL->setSpeed(50);
+  vorneL->setSpeed(35);
   vorneL->run(FORWARD);
   /*hintenL->setSpeed(50);
-  hintenL->run(FORWARD);*/
+  hintenL->run(FORWARD);
   vorneR->setSpeed(50);
   vorneR->run(FORWARD);
   hintenR->setSpeed(50);
-  hintenR->run(FORWARD);
+  hintenR->run(FORWARD);*/
+
+  while (i == 0)  {
+    Serial.println("Homing...");
+    i = digitalRead(PIN_EN1I);
+  }
+  vorneL->run(RELEASE);
+  delay(1000);
+  vorneL->run(FORWARD);
+  delay(500);
 }
+
+Encoder EncVL(PIN_EN1A, PIN_EN1B);
+Encoder EncVR(PIN_EN2A, PIN_EN2B);
+Encoder EncHL(PIN_EN3A, PIN_EN3B);
+Encoder EncHR(PIN_EN4A, PIN_EN4B);
 
 
 long positionEncVL = 0;
@@ -65,12 +77,12 @@ newPosVR = EncVR.read();
 newPosHL = EncHL.read();
 newPosHR = EncHR.read();
 
-if (newPosVL != positionEncVL || newPosVR != positionEncVR || newPosHL != positionEncHL || newPosHR != positionEncHL){
-  delay(500);
+if (newPosVL != positionEncVL || newPosVR != positionEncVR || newPosHL != positionEncHL || newPosHR != positionEncHR){
+  //delay(500);
   Serial.print("Position VorneL = ");
   Serial.println(newPosVL);
 
-  delay(500);
+  /*delay(500);
   Serial.print("Position VorneR = ");
   Serial.println((-1)*newPosVR);
 
@@ -80,12 +92,11 @@ if (newPosVL != positionEncVL || newPosVR != positionEncVR || newPosHL != positi
 
   delay(500);
   Serial.print("Position HintenR = ");
-  Serial.println((-1)*newPosHR);
+  Serial.println((-1)*newPosHR);*/
 
   positionEncVL = newPosVL;
   positionEncVR = newPosVR;
   positionEncHL = newPosHL;
   positionEncHR = newPosHR;
+    }
   }
-
-}

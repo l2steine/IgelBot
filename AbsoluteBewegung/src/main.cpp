@@ -15,7 +15,7 @@ int a;
 int b;
 int i;
 
-volatile int encoderPos = 0;
+int encoderPos = 0;
 int encoderPinALast = LOW;
 int n = LOW;
 
@@ -37,6 +37,21 @@ while (i == 0) {
   i = digitalRead(PIN_I);
     }
 Bein ->run(RELEASE);
+delay(100);
+Bein ->run(FORWARD);
+while((-1)*encoderPos<200)  {
+  n = digitalRead(PIN_A);
+    if((encoderPinALast == LOW) && (n == HIGH)) {
+    if (digitalRead(PIN_B) == LOW) {
+      encoderPos--;
+    } else {
+      encoderPos++; }
+  i = digitalRead(PIN_I);
+  }
+  encoderPinALast = n;
+}
+
+Bein->run(RELEASE);
 delay(1000);
 Bein->run(FORWARD);
 delay(500);
@@ -44,8 +59,9 @@ encoderPos = 0;
 }
 
 void loop() {
+  if((-1)*encoderPos<90)  {
   n = digitalRead(PIN_A);
-  if((encoderPinALast == LOW) && (n == HIGH)) {
+    if((encoderPinALast == LOW) && (n == HIGH)) {
     if (digitalRead(PIN_B) == LOW) {
       encoderPos--;
     } else {
@@ -55,4 +71,12 @@ void loop() {
   Serial.println((-1)*encoderPos);
   }
   encoderPinALast = n;
+} else{
+  Serial.println("Rechter Winkel erreicht!");
+  Bein->run(RELEASE);
+  delay(1000);
+  Bein->run(FORWARD);
+  delay(500);
+  encoderPos = 0;
+  }
 }
