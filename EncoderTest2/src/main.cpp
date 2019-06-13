@@ -3,18 +3,18 @@
 #include <Adafruit_MotorShield.h>
 
 #define M0 14
-#define PIN_EN1A 15
-#define PIN_EN1B 16
-#define PIN_EN1I 17
-#define PIN_EN2A 18
-#define PIN_EN2B 19
-#define PIN_EN2I 24
-#define PIN_EN3A 12
-#define PIN_EN3B 11
-#define PIN_EN3I 10
-#define PIN_EN4A 9
-#define PIN_EN4B 6
-#define PIN_EN4I 5
+#define PIN_EN1A 12
+#define PIN_EN1B 11
+#define PIN_EN1I 10
+#define PIN_EN2A 9
+#define PIN_EN2B 6
+#define PIN_EN2I 5
+#define PIN_EN3A 17
+#define PIN_EN3B 16
+#define PIN_EN3I 15
+#define PIN_EN4A 24
+#define PIN_EN4B 19
+#define PIN_EN4I 18
 
 Adafruit_MotorShield AFMS = Adafruit_MotorShield();
 Adafruit_DCMotor *hintenL = AFMS.getMotor(1);
@@ -48,8 +48,8 @@ pinMode(M0,OUTPUT);
 AFMS.begin();
 vorneL->setSpeed(35);
 vorneL->run(FORWARD);
-/*hintenL->setSpeed(35);
-hintenL->run(FORWARD);*/
+hintenL->setSpeed(35);
+hintenL->run(FORWARD);
 vorneR->setSpeed(35);
 vorneR->run(FORWARD);
 hintenR->setSpeed(35);

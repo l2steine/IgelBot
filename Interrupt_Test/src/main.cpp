@@ -3,9 +3,9 @@
 #include <Adafruit_MotorShield.h>
 
 #define M0 14              //Pinbelegung
-#define PIN_A 17
-#define PIN_B 16
-#define PIN_I 15
+#define PIN_A 12
+#define PIN_B 11
+#define PIN_I 10
 
 Adafruit_MotorShield AFMS = Adafruit_MotorShield();     //Motor einrichten
 Adafruit_DCMotor *Bein = AFMS.getMotor(1);
@@ -23,14 +23,14 @@ void setup() {
     while(!Serial){
       delay(1);
     }
+attachInterrupt(digitalPinToInterrupt(PIN_A), encoder, CHANGE);     //ISR Encoderabtast
 Serial.println("Ready");
 pinMode(M0,OUTPUT);       //Motor konfigurieren
 AFMS.begin();
-Bein->setSpeed(45);
+
+Bein->setSpeed(90);
 Bein->run(FORWARD);
 while (i == 0) {        //Position Kalibrieren
-  delay(1);
-  Serial.println("Homing...");
   i = digitalRead(PIN_I);
     }
 while(encoderPos<200)  {
@@ -46,27 +46,27 @@ while(encoderPos<200)  {
 }
 Bein ->run(RELEASE);           //Startposition erreicht
 delay(200);
-Bein ->run(FORWARD);
-attachInterrupt(digitalPinToInterrupt(PIN_A), encoder, CHANGE);     //ISR Encoderabtast
 encoderPos = 0;
+
+Bein ->run(FORWARD);
 }
 
 void loop() {
 delay(100);
 Serial.print("Position Bein = ");       //Position auf SerialMonitor mitverfolgen
 Serial.println(encoderPos);
-if(encoderPos>360*4)  {
+if(encoderPos>360*4)  {                 //4 Schritte vorwärts
   Bein ->run(RELEASE);
   delay(200);
-  Bein ->setSpeed(35);
+  Bein ->setSpeed(80);
   Bein ->run(BACKWARD);
-  while(encoderPos>0) {
+  while(encoderPos>0) {                 //4 Schritte rückwärts
     Serial.print("Position Bein = ");
     Serial.println(encoderPos);
     }
   Bein ->run(RELEASE);
   delay(200);
-  Bein ->setSpeed(45);
+  Bein ->setSpeed(90);
   Bein ->run(FORWARD);
   }
 }
