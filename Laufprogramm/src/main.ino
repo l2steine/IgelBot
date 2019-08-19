@@ -4,15 +4,15 @@
 #include <PID_v1.h>
 
 #define M0 14              //Pinbelegung
-#define PIN_A1 12
+#define PIN_A1 10
 #define PIN_B1 11
-#define PIN_I1 10
-#define PIN_A2 9
-#define PIN_B2 6
-#define PIN_I2 5
-#define PIN_A3 17
-#define PIN_B3 16
-#define PIN_I3 15
+#define PIN_I1 12
+#define PIN_A2 17
+#define PIN_B2 16
+#define PIN_I2 15
+#define PIN_A3 9
+#define PIN_B3 6
+#define PIN_I3 5
 #define PIN_A4 24
 #define PIN_B4 19
 #define PIN_I4 18
@@ -41,10 +41,10 @@ PID HLReg(&HLRegIn, &HLRegOut, &Hintensollwert, Kp, Ki, Kd, DIRECT);
 PID HRReg(&HRRegIn, &HRRegOut, &Vornesollwert, Kp, Ki, Kd, DIRECT);
 
 Adafruit_MotorShield AFMS = Adafruit_MotorShield();     //Motor eine Nummer am Motor Shield zuordnen
-Adafruit_DCMotor *BeinVL = AFMS.getMotor(3);
-Adafruit_DCMotor *BeinVR = AFMS.getMotor(4);
-Adafruit_DCMotor *BeinHL = AFMS.getMotor(2);
-Adafruit_DCMotor *BeinHR = AFMS.getMotor(1);
+Adafruit_DCMotor *BeinVL = AFMS.getMotor(1);
+Adafruit_DCMotor *BeinVR = AFMS.getMotor(2);
+Adafruit_DCMotor *BeinHL = AFMS.getMotor(4);
+Adafruit_DCMotor *BeinHR = AFMS.getMotor(3);
 
 int i1, i2, i3, i4;
 
@@ -102,9 +102,9 @@ while(encoder1Pos<200)  {
   n1 = digitalRead(PIN_A1);
     if((encoderPinA1Last == LOW) && (n1 == HIGH)) {
     if (digitalRead(PIN_B1) == LOW) {
-      encoder1Pos++;
+      encoder1Pos--;
     } else {
-      encoder1Pos--; }
+      encoder1Pos++; }
   }
   encoderPinA1Last = n1;
 }
@@ -115,13 +115,13 @@ Serial.println("Homing Vorne Rechts...");
 while (i2 == 0) {        //Position Kalibrieren
   i2 = digitalRead(PIN_I2);
         }
-while(encoder2Pos<170)  {
+while(encoder2Pos<150)  {
   n2 = digitalRead(PIN_A2);
   if((encoderPinA2Last == LOW) && (n2 == HIGH)) {
   if (digitalRead(PIN_B2) == LOW) {
-    encoder2Pos--;
+    encoder2Pos++;
   } else {
-    encoder2Pos++; }
+    encoder2Pos--; }
   }
   encoderPinA2Last = n2;
 }
@@ -132,13 +132,13 @@ Serial.println("Homing Hinten Links...");
 while (i3 == 0) {        //Position Kalibrieren
   i3 = digitalRead(PIN_I3);
         }
-while(encoder3Pos<175)  {     //Serial.println("Rechts auf Startposition...");
+while(encoder3Pos<10)  {     //Serial.println("Rechts auf Startposition...");
   n3 = digitalRead(PIN_A3);
   if((encoderPinA3Last == LOW) && (n3 == HIGH)) {
   if (digitalRead(PIN_B3) == LOW) {
-    encoder3Pos++;
+    encoder3Pos--;
   } else {
-    encoder3Pos--; }
+    encoder3Pos++; }
   }
   encoderPinA3Last = n3;
 }
@@ -149,13 +149,13 @@ Serial.println("Homing Hinten Rechts...");
 while (i4 == 0) {        //Position Kalibrieren
   i4 = digitalRead(PIN_I4);
         }
-while(encoder4Pos<145)  {     //Serial.println("Rechts auf Startposition...");
+while(encoder4Pos<155)  {     //Serial.println("Rechts auf Startposition...");
   n4 = digitalRead(PIN_A4);
   if((encoderPinA4Last == LOW) && (n4 == HIGH)) {
   if (digitalRead(PIN_B4) == LOW) {
-    encoder4Pos--;
+    encoder4Pos++;
   } else {
-    encoder4Pos++; }
+    encoder4Pos--; }
   }
   encoderPinA4Last = n4;
 }
@@ -271,9 +271,9 @@ void encoder1()  {             //ISR Encoderprogrammablauf
   n1 = digitalRead(PIN_A1);
     if((encoderPinA1Last == LOW) && (n1 == HIGH)) {
     if (digitalRead(PIN_B1) == LOW) {
-      encoder1Pos++;
+      encoder1Pos--;
     } else {
-      encoder1Pos--; }
+      encoder1Pos++; }
   }
   encoderPinA1Last = n1;
 }
@@ -282,9 +282,9 @@ void encoder2()  {             //ISR Encoderprogrammablauf
   n2 = digitalRead(PIN_A2);
     if((encoderPinA2Last == LOW) && (n2 == HIGH)) {
     if (digitalRead(PIN_B2) == LOW) {
-      encoder2Pos--;
+      encoder2Pos++;
     } else {
-      encoder2Pos++; }
+      encoder2Pos--; }
   }
   encoderPinA2Last = n2;
 }
@@ -293,9 +293,9 @@ void encoder3()  {             //ISR Encoderprogrammablauf
   n3 = digitalRead(PIN_A3);
     if((encoderPinA3Last == LOW) && (n3 == HIGH)) {
     if (digitalRead(PIN_B3) == LOW) {
-      encoder3Pos++;
+      encoder3Pos--;
     } else {
-      encoder3Pos--; }
+      encoder3Pos++; }
   }
   encoderPinA3Last = n3;
 }
@@ -304,9 +304,9 @@ void encoder4()  {             //ISR Encoderprogrammablauf
   n4 = digitalRead(PIN_A4);
     if((encoderPinA4Last == LOW) && (n4 == HIGH)) {
     if (digitalRead(PIN_B4) == LOW) {
-      encoder4Pos--;
+      encoder4Pos++;
     } else {
-      encoder4Pos++; }
+      encoder4Pos--; }
   }
   encoderPinA4Last = n4;
 }
