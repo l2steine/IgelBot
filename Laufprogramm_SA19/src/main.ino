@@ -16,16 +16,16 @@
 #define PIN_B4 19
 #define PIN_I4 18 */ //momentan soll nur 1 Bein getestet werden
 
-double VLRegIn;   //PID Input
+/* double VLRegIn;   //PID Input
 double VLRegOut;  //PID Output
-/*double VRRegIn;
+double VRRegIn;
 double VRRegOut;
 double HLRegIn;
 double HLRegOut;
 double HRRegIn;
 double HRRegOut;*/  //momentan soll nur 1 Bein getestet werden
 
-int toleranz = 10;    //PID toleranz
+/* int toleranz = 10;    //PID toleranz
 int schritt = 45;      //PID Schrittgrösse
 
 double Kp=0.8, Ki=1, Kd=0;     //Regler Verstärkungsfaktoren
@@ -35,7 +35,7 @@ double Hintensollwert = 0;
 
 
 PID VLReg(&VLRegIn, &VLRegOut, &Vornesollwert, Kp, Ki, Kd, DIRECT);       //Einrichten der Regler (Momentanwert, Regelwert, Sollwert)
-/*PID VRReg(&VRRegIn, &VRRegOut, &Hintensollwert, Kp, Ki, Kd, DIRECT);
+PID VRReg(&VRRegIn, &VRRegOut, &Hintensollwert, Kp, Ki, Kd, DIRECT);
 PID HLReg(&HLRegIn, &HLRegOut, &Hintensollwert, Kp, Ki, Kd, DIRECT);
 PID HRReg(&HRRegIn, &HRRegOut, &Vornesollwert, Kp, Ki, Kd, DIRECT);*/ //momentan soll nur 1 Bein getestet werden
 
@@ -45,7 +45,7 @@ volatile int encoder1Pos = 0;                 //Encoder Values auf 0 Stellen
 /*volatile int encoder2Pos = 0;
 volatile int encoder3Pos = 0;
 volatile int encoder4Pos = 0;*/ //momentan soll nur 1 Bein getestet werden
-volatile int encoderPinA1Last = LOW;          //Nötige Voreinstellungen für das Encoder Programm
+volatile int encoderPinA1Last = LOW;  //Nötige Voreinstellungen für das Encoder Programm
 /*volatile int encoderPinA2Last = LOW;
 volatile int encoderPinA3Last = LOW;
 volatile int encoderPinA4Last = LOW;*/ //momentan soll nur 1 Bein getestet werden
@@ -56,8 +56,8 @@ volatile int n4 = LOW;*/ //momentan soll nur 1 Bein getestet werden
 
 int speedHome = 127; //Homegeschwindigkeit
 int direction = HIGH; //allgemeine Drehrichtung Beine, vorwärts
-int speedM1, speedM2, speedM3, speedM4; //Drehgeschwindigkeit der Motoren
-int factor1, factor2, factor3, factor4; //Faktoren für Geschwindigkeit der Motoren
+/*int speedM1, speedM2, speedM3, speedM4; //Drehgeschwindigkeit der Motoren
+int factor1, factor2, factor3, factor4; //Faktoren für Geschwindigkeit der Motoren */
 
 
 void setup() {
@@ -76,8 +76,8 @@ void setup() {
   pinMode (PIN_B4, INPUT);
   pinMode (PIN_I4, INPUT);*/ //momentan soll nur 1 Bein getestet werden
 
-  VLReg.SetOutputLimits(0,255);           //Geschwindigkeitsbegrenzungen der Regler definieren, PWM-Range definieren
-  /*VRReg.SetOutputLimits(0,140);
+  /* VLReg.SetOutputLimits(0,255);           //Geschwindigkeitsbegrenzungen der Regler definieren, PWM-Range definieren
+  VRReg.SetOutputLimits(0,140);
   HLReg.SetOutputLimits(0,140);
   HRReg.SetOutputLimits(0,140);*/ //momentan soll nur 1 Bein getestet werden
 
@@ -92,12 +92,11 @@ void setup() {
   digitalWrite (DIR_1, direction); //Homingsequenz
   analogWrite (PWM_1, speedHome);
   Serial.println("Homing Vorne Links...");
-
   while (i1 == 0) //Position kalibrieren
   {
   i1 = digitalRead(PIN_I1); //Indeximpuls für Referenzierung
   }
-  while(encoder1Pos<200)
+  while(encoder1Pos<200) //Wert 200 muss angepasst werden
   {
     n1 = digitalRead(PIN_A1);
     if((encoderPinA1Last == LOW) && (n1 == HIGH))
@@ -118,37 +117,37 @@ void setup() {
   Serial.println("Homing beendet");
   delay(1000);
 
-  VLReg.SetMode(AUTOMATIC);           //Regler Modus einstellen
-  /* VRReg.SetMode(AUTOMATIC);
+  /* VLReg.SetMode(AUTOMATIC);           //Regler Modus einstellen
+  VRReg.SetMode(AUTOMATIC);
   HLReg.SetMode(AUTOMATIC);
   HRReg.SetMode(AUTOMATIC); */
 
-  encoder1Pos = 0;                    //Encoderwerte auf 0 setzen
-  /* encoder2Pos = 0;
+  /* encoder1Pos = 0;                    //Encoderwerte auf 0 setzen
+  encoder2Pos = 0;
   encoder3Pos = 0;
-  encoder4Pos = 0; */
+  encoder4Pos = 0;
   delay(100);
 
   attachInterrupt(digitalPinToInterrupt(PIN_A1), encoder1, CHANGE);     //ISR-Definierung für Encoderabtastung
-  /* attachInterrupt(digitalPinToInterrupt(PIN_A2), encoder2, CHANGE);     //ISR-Definierung für Encoderabtastung
+  attachInterrupt(digitalPinToInterrupt(PIN_A2), encoder2, CHANGE);     //ISR-Definierung für Encoderabtastung
   attachInterrupt(digitalPinToInterrupt(PIN_A3), encoder3, CHANGE);     //ISR-Definierung für Encoderabtastung
-  attachInterrupt(digitalPinToInterrupt(PIN_A4), encoder4, CHANGE); */    //ISR-Definierung für Encoderabtastung
+  attachInterrupt(digitalPinToInterrupt(PIN_A4), encoder4, CHANGE);     //ISR-Definierung für Encoderabtastung
 
-  analogWrite (PWM_1, HIGH);          //Motoren starten
+  analogWrite (PWM_1, HIGH); */          //Motoren starten
 
   }                               //Ende void setup
 
 void loop()
 {
-  VLRegIn = encoder1Pos;          //Regler Encoderpositionen als Reglereingänge definieren
-  /* VRRegIn = encoder2Pos;
+  /* VLRegIn = encoder1Pos;          //Regler Encoderpositionen als Reglereingänge definieren
+  VRRegIn = encoder2Pos;
   HLRegIn = encoder3Pos;
-  HRRegIn = encoder4Pos; */
+  HRRegIn = encoder4Pos;
 
   VLReg.Compute();                //Regelsystem updaten
-  /* VRReg.Compute();
+  VRReg.Compute();
   HLReg.Compute();
-  HRReg.Compute(); */
+  HRReg.Compute();
 
   delay(100);
   Serial.print("Aktuelle Position Vorne Links = ");       //Position auf SerialMonitor mitverfolgen
@@ -162,7 +161,7 @@ void loop()
 
   BeinVL ->setSpeed(VLRegOut);
 
-  /* Serial.print("Position Vorne Rechts = ");
+  Serial.print("Position Vorne Rechts = ");
   Serial.println(encoder2Pos);
   Serial.print("Sollposition Vorne Rechts = ");
   Serial.println(Hintensollwert);
@@ -187,7 +186,7 @@ void loop()
   Serial.print("Anzahl Umdrehungen Hinten Rechts = ");
   Serial.println(encoder4Pos/360);
   Serial.println(" ");
-  BeinHR ->setSpeed(HRRegOut); */
+  BeinHR ->setSpeed(HRRegOut);
 
   if (encoder1Pos >= Vornesollwert-toleranz && encoder2Pos >= Hintensollwert-toleranz && encoder3Pos >= Hintensollwert-toleranz && encoder4Pos >= Vornesollwert-toleranz)
   {
@@ -238,5 +237,5 @@ void loop()
     } else {
       encoder4Pos--; }
   }
-  encoderPinA4Last = n4;
-} */
+  encoderPinA4Last = n4; */
+}
