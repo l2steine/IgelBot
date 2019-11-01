@@ -1,28 +1,23 @@
-#include<Arduino.h>
-#include<PID_v1.h>
+#include <Arduino.h>
 
 #define PWM_1 13
 #define DIR_1 21
-
-int speedHome = 127; //Homegeschwindigkeit
-int direction = HIGH; //allgemeine Drehrichtung Beine, vorwärts
 
 void setup()
 {
   pinMode (PWM_1, OUTPUT);
   pinMode (DIR_1, OUTPUT);
-
-  Serial.begin (9600);
-  while(!Serial) //warten bis Serialport verbindet
-  {
-    delay(1);
-  }
+  digitalWrite (DIR_1, LOW); //Homingsequenz
+  analogWrite (PWM_1, LOW);
+  delay(500);
+  Serial.begin(9600);
+  delay (2000);
   Serial.println("Ready");
   delay(2000);
-  digitalWrite (DIR_1, direction); //Homingsequenz
-  analogWrite (PWM_1, speedHome);
+  Serial.println("funktioniert");
+  analogWrite(PWM_1, 255);
   delay(5000);
-
+  analogWrite(PWM_1, LOW);
 }
 
 void loop()
