@@ -1,23 +1,30 @@
 #include <Arduino.h>
 #include <PID_v1.h>
 
-#define PIN_A1 5 //Pinbelegung
-#define PIN_B1 6
-#define PIN_I1 9
-#define PWM_1 13
-#define DIR_1 21
+//Pinbelegung
+#define PIN_A1 5 //Input A-Signal Encoder 1
+#define PIN_B1 6 //Input B-Signal Encoder 1
+#define PIN_I1 9 //Input I-Signal Encoder 1
+#define PWM_1 13 //PWM-Ausgang für Motor 1
+#define DIR_1 21 //Richtungsangabe für Motor 1
 /* #define PIN_A2 17
 #define PIN_B2 16
 #define PIN_I2 15
+#define PWM_2 12
+#define DIR_2 20
 #define PIN_A3 1
 #define PIN_B3 0
 #define PIN_I3 22
+#define PWM_3 11
+#define DIR_3 14
 #define PIN_A4 24
 #define PIN_B4 19
-#define PIN_I4 18 */ //momentan soll nur 1 Bein getestet werden
+#define PIN_I4 18
+#define PWM_4 10
+#define DIR_4 23 */ //momentan soll nur 1 Bein getestet werden
 
-/* double VLRegIn;   //PID Input
-double VLRegOut;  //PID Output
+/* double VLRegIn;   //PID Input vorne links
+double VLRegOut;  //PID Output vorne rechts
 double VRRegIn;
 double VRRegOut;
 double HLRegIn;
@@ -34,7 +41,7 @@ double Vornesollwert = 180;    //Zielposition der Beine
 double Hintensollwert = 0;
 
 
-PID VLReg(&VLRegIn, &VLRegOut, &Vornesollwert, Kp, Ki, Kd, DIRECT);       //Einrichten der Regler (Momentanwert, Regelwert, Sollwert)
+PID VLReg(&VLRegIn, &VLRegOut, &Vornesollwert, Kp, Ki, Kd, DIRECT);   //Einrichten der Regler (Momentanwert, Regelwert, Sollwert)
 PID VRReg(&VRRegIn, &VRRegOut, &Hintensollwert, Kp, Ki, Kd, DIRECT);
 PID HLReg(&HLRegIn, &HLRegOut, &Hintensollwert, Kp, Ki, Kd, DIRECT);
 PID HRReg(&HRRegIn, &HRRegOut, &Vornesollwert, Kp, Ki, Kd, DIRECT);*/ //momentan soll nur 1 Bein getestet werden
@@ -55,10 +62,6 @@ volatile int n3 = LOW;
 volatile int n4 = LOW;*/ //momentan soll nur 1 Bein getestet werden
 
 int speedHome = 127; //Homegeschwindigkeit
-int direction = HIGH; //allgemeine Drehrichtung Beine, vorwärts
-/*int speedM1, speedM2, speedM3, speedM4; //Drehgeschwindigkeit der Motoren
-int factor1, factor2, factor3, factor4; //Faktoren für Geschwindigkeit der Motoren */
-
 
 void setup() {
   pinMode (PIN_A1, INPUT);          //Pins definieren
@@ -69,17 +72,27 @@ void setup() {
   /*pinMode (PIN_A2, INPUT);
   pinMode (PIN_B2, INPUT);
   pinMode (PIN_I2, INPUT);
+  pinMode (PWM_2, OUTPUT);
+  pinMode (DIR_2, OUTPUT);
   pinMode (PIN_A3, INPUT);
   pinMode (PIN_B3, INPUT);
   pinMode (PIN_I3, INPUT);
+  pinMode (PWM_3, OUTPUT);
+  pinMode (DIR_3, OUTPUT);
   pinMode (PIN_A4, INPUT);
   pinMode (PIN_B4, INPUT);
-  pinMode (PIN_I4, INPUT);*/ //momentan soll nur 1 Bein getestet werden
+  pinMode (PIN_I4, INPUT);
+  pinMode (PWM_4, OUTPUT);
+  pinMode (DIR_4, OUTPUT); */ //momentan soll nur 1 Bein getestet werden
 
-  /* VLReg.SetOutputLimits(0,255);           //Geschwindigkeitsbegrenzungen der Regler definieren, PWM-Range definieren
-  VRReg.SetOutputLimits(0,140);
-  HLReg.SetOutputLimits(0,140);
-  HRReg.SetOutputLimits(0,140);*/ //momentan soll nur 1 Bein getestet werden
+  /* VLReg.SetOutputLimits(0,255);   //Geschwindigkeitsbegrenzungen der Regler definieren, PWM-Range definieren
+  VRReg.SetOutputLimits(0,255);
+  HLReg.SetOutputLimits(0,255);
+  HRReg.SetOutputLimits(0,255);*/ //momentan soll nur 1 Bein getestet werden
+
+  //Motoren initialisieren
+  analogWrite (PWM_1, LOW); //Geschwindigkeit Motor 1 auf Null setzen
+  digitalWrite (DIR_1, HIGH); //Drehrichtung Motor 1 vorwärts
 
   Serial.begin (9600);
   while(!Serial) //warten bis Serialport verbindet
@@ -89,8 +102,7 @@ void setup() {
   Serial.println("Ready");
   delay(2000);
 
-  digitalWrite (DIR_1, direction); //Homingsequenz
-  analogWrite (PWM_1, speedHome);
+  analogWrite (PWM_1, speedHome); //Homingsequenz
   Serial.println("Homing Vorne Links...");
   while (i1 == 0) //Position kalibrieren
   {
@@ -113,7 +125,6 @@ void setup() {
     encoderPinA1Last = n1;
   }
   analogWrite (PWM_1, LOW); //Startposition erreicht
-
   Serial.println("Homing beendet");
   delay(1000);
 
@@ -133,13 +144,13 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(PIN_A3), encoder3, CHANGE);     //ISR-Definierung für Encoderabtastung
   attachInterrupt(digitalPinToInterrupt(PIN_A4), encoder4, CHANGE);     //ISR-Definierung für Encoderabtastung
 
-  analogWrite (PWM_1, HIGH); */          //Motoren starten
+  analogWrite (PWM_1, HIGH); */ //Motor mit Laufgeschwindigkeit von ca. 0.2 m/s initialisieren
 
-  }                               //Ende void setup
+  }   //Ende void setup
 
 void loop()
 {
-  /* VLRegIn = encoder1Pos;          //Regler Encoderpositionen als Reglereingänge definieren
+  /* VLRegIn = encoder1Pos;          //Encoderpositionen als Reglereingänge definieren
   VRRegIn = encoder2Pos;
   HLRegIn = encoder3Pos;
   HRRegIn = encoder4Pos;
