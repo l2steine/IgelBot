@@ -30,21 +30,23 @@ double VRRegOut;
 double HLRegIn;
 double HLRegOut;
 double HRRegIn;
-double HRRegOut;*/  //momentan soll nur 1 Bein getestet werden
+double HRRegOut;
+*/  //momentan soll nur 1 Bein getestet werden
 
 /* int toleranz = 10;    //PID toleranz
 int schritt = 45;      //PID Schrittgrösse
 
-double Kp=0.8, Ki=1, Kd=0;     //Regler Verstärkungsfaktoren
+double Kp=0.8, Ki=1, Kd=0; //Regler Verstärkungsfaktoren Sollposition
 
 double Vornesollwert = 180;    //Zielposition der Beine
 double Hintensollwert = 0;
 
-
-PID VLReg(&VLRegIn, &VLRegOut, &Vornesollwert, Kp, Ki, Kd, DIRECT);   //Einrichten der Regler (Momentanwert, Regelwert, Sollwert)
+PID VLReg(&VLRegIn, &VLRegOut, &Vornesollwert, Kp, Ki, Kd, DIRECT);   //Einrichten der Positionsregler (Momentanwert, Regelwert, Sollwert)
 PID VRReg(&VRRegIn, &VRRegOut, &Hintensollwert, Kp, Ki, Kd, DIRECT);
 PID HLReg(&HLRegIn, &HLRegOut, &Hintensollwert, Kp, Ki, Kd, DIRECT);
-PID HRReg(&HRRegIn, &HRRegOut, &Vornesollwert, Kp, Ki, Kd, DIRECT);*/ //momentan soll nur 1 Bein getestet werden
+PID HRReg(&HRRegIn, &HRRegOut, &Vornesollwert, Kp, Ki, Kd, DIRECT);
+
+*/ //momentan soll nur 1 Bein getestet werden
 
 int i1, i2, i3, i4; ////A-Signal der Encoder für Beine (VL,VR,HL,HR)
 
@@ -61,7 +63,7 @@ volatile int n1 = LOW;
 volatile int n3 = LOW;
 volatile int n4 = LOW;*/ //momentan soll nur 1 Bein getestet werden
 
-int speedHome = 127; //Homegeschwindigkeit
+int speedHome = 63; //Homegeschwindigkeit
 
 void setup() {
   pinMode (PIN_A1, INPUT);          //Pins definieren
@@ -144,7 +146,10 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(PIN_A3), encoder3, CHANGE);     //ISR-Definierung für Encoderabtastung
   attachInterrupt(digitalPinToInterrupt(PIN_A4), encoder4, CHANGE);     //ISR-Definierung für Encoderabtastung
 
-  analogWrite (PWM_1, HIGH); */ //Motor mit Laufgeschwindigkeit von ca. 0.2 m/s initialisieren
+  analogWrite (PWM_1, 63);
+  analogWrite (PWM_2, 63);
+  analogWrite (PWM_3, 63);
+  analogWrite (PWM_4, 63); */ //Motoren starten
 
   }   //Ende void setup
 
