@@ -105,13 +105,13 @@ void setup()
   Serial.println("Ready");*/
   delay(2000);
 
-  analogWrite (PWM_1, 63); //Homingsequenz
+  analogWrite (PWM_1, speedHome); //Homingsequenz
   Serial.println("Homing Vorne Links...");
   while (i1 == 0) //Position kalibrieren
   {
   i1 = digitalRead(PIN_I1); //Indeximpuls für Referenzierung
   }
-  while(encoder1Pos<120) //Wert 200 muss angepasst werden
+  while(encoder1Pos<200) //Wert 200 muss angepasst werden
   {
     n1 = digitalRead(PIN_A1);
     if((encoderPinA1Last == LOW) && (n1 == HIGH))
