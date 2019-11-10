@@ -2,6 +2,7 @@
 #include <PID_v1.h>
 
 //Pinbelegung
+#define Serial SerialUSB
 #define PIN_A1 5 //Input A-Signal Encoder 1
 #define PIN_B1 6 //Input B-Signal Encoder 1
 #define PIN_I1 9 //Input I-Signal Encoder 1
@@ -98,11 +99,11 @@ void setup()
   digitalWrite (DIR_1, HIGH); //Drehrichtung Motor 1 vorwärts
 
   Serial.begin (9600);
-  /*while(!Serial) //warten bis Serialport verbindet
+  while(!Serial) //warten bis Serialport verbindet
   {
     delay(1);
   }
-  Serial.println("Ready");*/
+  Serial.println("Ready");
   delay(2000);
 
   analogWrite (PWM_1, speedHome); //Homingsequenz
@@ -152,7 +153,7 @@ void setup()
   analogWrite (PWM_3, 63);
   analogWrite (PWM_4, 63); */ //Motoren starten
 
-  }   //Ende void setup
+}   //Ende void setup
 
 void loop()
 {
