@@ -65,7 +65,8 @@ volatile int n4 = LOW;*/ //momentan soll nur 1 Bein getestet werden
 
 int speedHome = 63; //Homegeschwindigkeit
 
-void setup() {
+void setup()
+{
   pinMode (PIN_A1, INPUT);          //Pins definieren
   pinMode (PIN_B1, INPUT);
   pinMode (PIN_I1, INPUT);
@@ -97,31 +98,31 @@ void setup() {
   digitalWrite (DIR_1, HIGH); //Drehrichtung Motor 1 vorwärts
 
   Serial.begin (9600);
-  while(!Serial) //warten bis Serialport verbindet
+  /*while(!Serial) //warten bis Serialport verbindet
   {
     delay(1);
   }
-  Serial.println("Ready");
+  Serial.println("Ready");*/
   delay(2000);
 
-  analogWrite (PWM_1, speedHome); //Homingsequenz
+  analogWrite (PWM_1, 63); //Homingsequenz
   Serial.println("Homing Vorne Links...");
   while (i1 == 0) //Position kalibrieren
   {
   i1 = digitalRead(PIN_I1); //Indeximpuls für Referenzierung
   }
-  while(encoder1Pos<200) //Wert 200 muss angepasst werden
+  while(encoder1Pos<120) //Wert 200 muss angepasst werden
   {
     n1 = digitalRead(PIN_A1);
     if((encoderPinA1Last == LOW) && (n1 == HIGH))
     {
       if (digitalRead(PIN_B1) == LOW)
       {
-        encoder1Pos--;
+        encoder1Pos++;
       }
       else
       {
-        encoder1Pos++;
+        encoder1Pos--;
       }
     }
     encoderPinA1Last = n1;
