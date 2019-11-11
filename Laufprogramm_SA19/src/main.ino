@@ -2,13 +2,12 @@
 #include <PID_v1.h>
 
 //Pinbelegung
-#define Serial SerialUSB
-#define PIN_A1 5 //Input A-Signal Encoder 1
-#define PIN_B1 6 //Input B-Signal Encoder 1
-#define PIN_I1 9 //Input I-Signal Encoder 1
-#define PWM_1 13 //PWM-Ausgang für Motor 1
-#define DIR_1 21 //Richtungsangabe für Motor 1
-/* #define PIN_A2 17
+#define PIN_A1 5 //Input A-Signal Encoder VL
+#define PIN_B1 6 //Input B-Signal Encoder VL
+#define PIN_I1 9 //Input I-Signal Encoder VL
+#define PWM_1 13 //PWM-Ausgang für Motor VL
+#define DIR_1 21 //Richtungsangabe für Motor VL
+#define PIN_A2 17
 #define PIN_B2 16
 #define PIN_I2 15
 #define PWM_2 12
@@ -22,7 +21,7 @@
 #define PIN_B4 19
 #define PIN_I4 18
 #define PWM_4 10
-#define DIR_4 23 */ //momentan soll nur 1 Bein getestet werden
+#define DIR_4 23
 
 /* double VLRegIn;   //PID Input vorne links
 double VLRegOut;  //PID Output vorne rechts
@@ -51,20 +50,20 @@ PID HRReg(&HRRegIn, &HRRegOut, &Vornesollwert, Kp, Ki, Kd, DIRECT);
 
 int i1, i2, i3, i4; ////A-Signal der Encoder für Beine (VL,VR,HL,HR)
 
-volatile int encoder1Pos = 0;                 //Encoder Values auf 0 Stellen
-/*volatile int encoder2Pos = 0;
+volatile int encoder1Pos = 0; //Encoder Values auf 0 Stellen
+volatile int encoder2Pos = 0;
 volatile int encoder3Pos = 0;
-volatile int encoder4Pos = 0;*/ //momentan soll nur 1 Bein getestet werden
+volatile int encoder4Pos = 0;
 volatile int encoderPinA1Last = LOW;  //Nötige Voreinstellungen für das Encoder Programm
-/*volatile int encoderPinA2Last = LOW;
+volatile int encoderPinA2Last = LOW;
 volatile int encoderPinA3Last = LOW;
-volatile int encoderPinA4Last = LOW;*/ //momentan soll nur 1 Bein getestet werden
+volatile int encoderPinA4Last = LOW;
 volatile int n1 = LOW;
-/*volatile int n2 = LOW;
+volatile int n2 = LOW;
 volatile int n3 = LOW;
-volatile int n4 = LOW;*/ //momentan soll nur 1 Bein getestet werden
+volatile int n4 = LOW;
 
-int speedHome = 63; //Homegeschwindigkeit
+int speedHome = 60; //Homegeschwindigkeit
 
 void setup()
 {
@@ -73,7 +72,7 @@ void setup()
   pinMode (PIN_I1, INPUT);
   pinMode (PWM_1, OUTPUT);
   pinMode (DIR_1, OUTPUT);
-  /*pinMode (PIN_A2, INPUT);
+  pinMode (PIN_A2, INPUT);
   pinMode (PIN_B2, INPUT);
   pinMode (PIN_I2, INPUT);
   pinMode (PWM_2, OUTPUT);
@@ -87,7 +86,7 @@ void setup()
   pinMode (PIN_B4, INPUT);
   pinMode (PIN_I4, INPUT);
   pinMode (PWM_4, OUTPUT);
-  pinMode (DIR_4, OUTPUT); */ //momentan soll nur 1 Bein getestet werden
+  pinMode (DIR_4, OUTPUT);
 
   /* VLReg.SetOutputLimits(0,255);   //Geschwindigkeitsbegrenzungen der Regler definieren, PWM-Range definieren
   VRReg.SetOutputLimits(0,255);
@@ -95,8 +94,14 @@ void setup()
   HRReg.SetOutputLimits(0,255);*/ //momentan soll nur 1 Bein getestet werden
 
   //Motoren initialisieren
-  analogWrite (PWM_1, LOW); //Geschwindigkeit Motor 1 auf Null setzen
-  digitalWrite (DIR_1, HIGH); //Drehrichtung Motor 1 vorwärts
+  analogWrite (PWM_1, LOW);   //Geschwindigkeit Motor VL auf Null setzen
+  digitalWrite (DIR_1, HIGH);  //Drehrichtung Motor VL vorwärts
+  analogWrite (PWM_2, LOW);   //Geschwindigkeit Motor VR auf Null setzen
+  digitalWrite (DIR_2, LOW);  //Drehrichtung Motor VR vorwärts
+  analogWrite (PWM_3, LOW);   //Geschwindigkeit Motor HL auf Null setzen
+  digitalWrite (DIR_3, HIGH);  //Drehrichtung Motor HL vorwärts
+  analogWrite (PWM_4, LOW);   //Geschwindigkeit Motor HR auf Null setzen
+  digitalWrite (DIR_4, LOW);  //Drehrichtung Motor HR vorwärts
 
   Serial.begin (9600);
   while(!Serial) //warten bis Serialport verbindet
@@ -107,12 +112,12 @@ void setup()
   delay(2000);
 
   analogWrite (PWM_1, speedHome); //Homingsequenz
-  Serial.println("Homing Vorne Links...");
+  Serial.println("Homing vorne links...");
   while (i1 == 0) //Position kalibrieren
   {
   i1 = digitalRead(PIN_I1); //Indeximpuls für Referenzierung
   }
-  while(encoder1Pos<200) //Wert 200 muss angepasst werden
+  while(encoder1Pos<970) //Wert muss angepasst werden
   {
     n1 = digitalRead(PIN_A1);
     if((encoderPinA1Last == LOW) && (n1 == HIGH))
@@ -129,6 +134,79 @@ void setup()
     encoderPinA1Last = n1;
   }
   analogWrite (PWM_1, LOW); //Startposition erreicht
+
+  analogWrite (PWM_2, speedHome); //Homingsequenz
+  Serial.println("Homing vorne rechts...");
+  while (i2 == 0) //Position kalibrieren
+  {
+  i1 = digitalRead(PIN_I2); //Indeximpuls für Referenzierung
+  }
+  while(encoder1Pos<1030) //Wert muss angepasst werden
+  {
+    n1 = digitalRead(PIN_A2);
+    if((encoderPinA2Last == LOW) && (n2 == HIGH))
+    {
+      if (digitalRead(PIN_B2) == LOW)
+      {
+        encoder2Pos--;
+      }
+      else
+      {
+        encoder2Pos++;
+      }
+    }
+    encoderPinA2Last = n2;
+  }
+  analogWrite (PWM_2, LOW); //Startposition erreicht
+
+  analogWrite (PWM_3, speedHome); //Homingsequenz
+  Serial.println("Homing hinten links...");
+  while (i3 == 0) //Position kalibrieren
+  {
+  i1 = digitalRead(PIN_I3); //Indeximpuls für Referenzierung
+  }
+  while(encoder3Pos<960) //Wert muss angepasst werden
+  {
+    n1 = digitalRead(PIN_A3);
+    if((encoderPinA3Last == LOW) && (n3 == HIGH))
+    {
+      if (digitalRead(PIN_B3) == LOW)
+      {
+        encoder3Pos++;
+      }
+      else
+      {
+        encoder3Pos--;
+      }
+    }
+    encoderPinA3Last = n3;
+  }
+  analogWrite (PWM_3, LOW); //Startposition erreicht
+
+  analogWrite (PWM_4, speedHome); //Homingsequenz
+  Serial.println("Homing hinten rechts...");
+  while (i4 == 0) //Position kalibrieren
+  {
+  i1 = digitalRead(PIN_I4); //Indeximpuls für Referenzierung
+  }
+  while(encoder4Pos<880) //Wert muss angepasst werden
+  {
+    n1 = digitalRead(PIN_A4);
+    if((encoderPinA4Last == LOW) && (n4 == HIGH))
+    {
+      if (digitalRead(PIN_B4) == LOW)
+      {
+        encoder4Pos--;
+      }
+      else
+      {
+        encoder4Pos++;
+      }
+    }
+    encoderPinA4Last = n4;
+  }
+  analogWrite (PWM_4, LOW); //Startposition erreicht
+
   Serial.println("Homing beendet");
   delay(1000);
 
