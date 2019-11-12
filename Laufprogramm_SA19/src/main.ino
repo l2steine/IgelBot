@@ -7,23 +7,23 @@
 #define PIN_I1 9 //Input I-Signal Encoder VL
 #define PWM_1 13 //PWM-Ausgang für Motor VL
 #define DIR_1 21 //Richtungsangabe für Motor VL
-#define PIN_A2 17
-#define PIN_B2 16
-#define PIN_I2 15
-#define PWM_2 12
-#define DIR_2 20
-#define PIN_A3 1
-#define PIN_B3 0
-#define PIN_I3 22
-#define PWM_3 11
-#define DIR_3 14
-#define PIN_A4 24
-#define PIN_B4 19
-#define PIN_I4 18
-#define PWM_4 10
-#define DIR_4 23
+#define PIN_A2 17 //Input A-Signal Encoder VR
+#define PIN_B2 16 //Input B-Signal Encoder VR
+#define PIN_I2 15 //Input I-Signal Encoder VR
+#define PWM_2 12 //PWM-Ausgang für Motor VR
+#define DIR_2 20 //Richtungsangabe für Motor VR
+#define PIN_A3 1 //Input A-Signal Encoder HL
+#define PIN_B3 0 //Input B-Signal Encoder HL
+#define PIN_I3 22 //Input I-Signal Encoder HL
+#define PWM_3 11 //PWM-Ausgang für Motor HL
+#define DIR_3 14 //Richtungsangabe für Motor HL
+#define PIN_A4 24 //Input A-Signal Encoder HR
+#define PIN_B4 19 //Input B-Signal Encoder HR
+#define PIN_I4 18 //Input I-Signal Encoder HR
+#define PWM_4 10 //PWM-Ausgang Motor HR
+#define DIR_4 23 //Richtungsangabe für Motor HR
 
-/* double VLRegIn;   //PID Input vorne links
+double VLRegIn;   //PID Input vorne links
 double VLRegOut;  //PID Output vorne rechts
 double VRRegIn;
 double VRRegOut;
@@ -31,9 +31,8 @@ double HLRegIn;
 double HLRegOut;
 double HRRegIn;
 double HRRegOut;
-*/  //momentan soll nur 1 Bein getestet werden
 
-/* int toleranz = 10;    //PID toleranz
+int toleranz = 10;    //PID toleranz
 int schritt = 45;      //PID Schrittgrösse
 
 double Kp=0.8, Ki=1, Kd=0; //Regler Verstärkungsfaktoren Sollposition
@@ -45,8 +44,6 @@ PID VLReg(&VLRegIn, &VLRegOut, &Vornesollwert, Kp, Ki, Kd, DIRECT);   //Einricht
 PID VRReg(&VRRegIn, &VRRegOut, &Hintensollwert, Kp, Ki, Kd, DIRECT);
 PID HLReg(&HLRegIn, &HLRegOut, &Hintensollwert, Kp, Ki, Kd, DIRECT);
 PID HRReg(&HRRegIn, &HRRegOut, &Vornesollwert, Kp, Ki, Kd, DIRECT);
-
-*/ //momentan soll nur 1 Bein getestet werden
 
 int i1, i2, i3, i4; ////A-Signal der Encoder für Beine (VL,VR,HL,HR)
 
@@ -64,6 +61,11 @@ volatile int n3 = LOW;
 volatile int n4 = LOW;
 
 int speedHome = 60; //Homegeschwindigkeit
+
+void encoder1();
+void encoder2();
+void encoder3();
+void encoder4();
 
 void setup()
 {
@@ -88,10 +90,10 @@ void setup()
   pinMode (PWM_4, OUTPUT);
   pinMode (DIR_4, OUTPUT);
 
-  /* VLReg.SetOutputLimits(0,255);   //Geschwindigkeitsbegrenzungen der Regler definieren, PWM-Range definieren
-  VRReg.SetOutputLimits(0,255);
-  HLReg.SetOutputLimits(0,255);
-  HRReg.SetOutputLimits(0,255);*/ //momentan soll nur 1 Bein getestet werden
+  VLReg.SetOutputLimits(0,150);   //Geschwindigkeitsbegrenzungen der Regler definieren, PWM-Range definieren
+  VRReg.SetOutputLimits(0,150);
+  HLReg.SetOutputLimits(0,150);
+  HRReg.SetOutputLimits(0,150);
 
   //Motoren initialisieren
   analogWrite (PWM_1, LOW);   //Geschwindigkeit Motor VL auf Null setzen
@@ -104,11 +106,11 @@ void setup()
   digitalWrite (DIR_4, LOW);  //Drehrichtung Motor HR vorwärts
 
   Serial.begin (9600);
-  while(!Serial) //warten bis Serialport verbindet
+  /*while(!Serial) //warten bis Serialport verbindet
   {
     delay(1);
   }
-  Serial.println("Ready");
+  Serial.println("Ready");*/
   delay(2000);
 
   analogWrite (PWM_1, speedHome); //Homingsequenz
@@ -139,11 +141,11 @@ void setup()
   Serial.println("Homing vorne rechts...");
   while (i2 == 0) //Position kalibrieren
   {
-  i1 = digitalRead(PIN_I2); //Indeximpuls für Referenzierung
+  i2 = digitalRead(PIN_I2); //Indeximpuls für Referenzierung
   }
-  while(encoder1Pos<1030) //Wert muss angepasst werden
+  while(encoder2Pos<1030) //Wert muss angepasst werden
   {
-    n1 = digitalRead(PIN_A2);
+    n2 = digitalRead(PIN_A2);
     if((encoderPinA2Last == LOW) && (n2 == HIGH))
     {
       if (digitalRead(PIN_B2) == LOW)
@@ -163,11 +165,11 @@ void setup()
   Serial.println("Homing hinten links...");
   while (i3 == 0) //Position kalibrieren
   {
-  i1 = digitalRead(PIN_I3); //Indeximpuls für Referenzierung
+  i3 = digitalRead(PIN_I3); //Indeximpuls für Referenzierung
   }
   while(encoder3Pos<960) //Wert muss angepasst werden
   {
-    n1 = digitalRead(PIN_A3);
+    n3 = digitalRead(PIN_A3);
     if((encoderPinA3Last == LOW) && (n3 == HIGH))
     {
       if (digitalRead(PIN_B3) == LOW)
@@ -187,11 +189,11 @@ void setup()
   Serial.println("Homing hinten rechts...");
   while (i4 == 0) //Position kalibrieren
   {
-  i1 = digitalRead(PIN_I4); //Indeximpuls für Referenzierung
+  i4 = digitalRead(PIN_I4); //Indeximpuls für Referenzierung
   }
   while(encoder4Pos<880) //Wert muss angepasst werden
   {
-    n1 = digitalRead(PIN_A4);
+    n4 = digitalRead(PIN_A4);
     if((encoderPinA4Last == LOW) && (n4 == HIGH))
     {
       if (digitalRead(PIN_B4) == LOW)
@@ -210,12 +212,12 @@ void setup()
   Serial.println("Homing beendet");
   delay(1000);
 
-  /* VLReg.SetMode(AUTOMATIC);           //Regler Modus einstellen
+  VLReg.SetMode(AUTOMATIC);           //Regler Modus einstellen
   VRReg.SetMode(AUTOMATIC);
   HLReg.SetMode(AUTOMATIC);
-  HRReg.SetMode(AUTOMATIC); */
+  HRReg.SetMode(AUTOMATIC);
 
-  /* encoder1Pos = 0;                    //Encoderwerte auf 0 setzen
+  encoder1Pos = 0;                    //Encoderwerte auf 0 setzen
   encoder2Pos = 0;
   encoder3Pos = 0;
   encoder4Pos = 0;
@@ -226,16 +228,16 @@ void setup()
   attachInterrupt(digitalPinToInterrupt(PIN_A3), encoder3, CHANGE);     //ISR-Definierung für Encoderabtastung
   attachInterrupt(digitalPinToInterrupt(PIN_A4), encoder4, CHANGE);     //ISR-Definierung für Encoderabtastung
 
-  analogWrite (PWM_1, 63);
-  analogWrite (PWM_2, 63);
-  analogWrite (PWM_3, 63);
-  analogWrite (PWM_4, 63); */ //Motoren starten
+  analogWrite (PWM_1, speedHome);
+  analogWrite (PWM_2, speedHome);
+  analogWrite (PWM_3, speedHome);
+  analogWrite (PWM_4, speedHome);
 
 }   //Ende void setup
 
 void loop()
 {
-  /* VLRegIn = encoder1Pos;          //Encoderpositionen als Reglereingänge definieren
+  VLRegIn = encoder1Pos;          //Encoderpositionen als Reglereingänge definieren
   VRRegIn = encoder2Pos;
   HLRegIn = encoder3Pos;
   HRRegIn = encoder4Pos;
@@ -253,9 +255,7 @@ void loop()
   Serial.print("Anzahl Umdrehungen Vorne Links = ");    //Anzahl Umdrehungen auf SerialMonitor mitverfolgen
   Serial.println(encoder1Pos/360);
   Serial.println(" ");
-
-
-  BeinVL ->setSpeed(VLRegOut);
+  analogWrite(PWM_1, VLRegOut);
 
   Serial.print("Position Vorne Rechts = ");
   Serial.println(encoder2Pos);
@@ -264,7 +264,7 @@ void loop()
   Serial.print("Anzahl Umdrehungen Vorne Rechts = ");
   Serial.println(encoder2Pos/360);
   Serial.println(" ");
-  BeinVR ->setSpeed(VRRegOut);
+  analogWrite(PWM_2, VRRegOut);
 
   Serial.print("Position Hinten Links = ");
   Serial.println(encoder3Pos);
@@ -273,7 +273,7 @@ void loop()
   Serial.print("Anzahl Umdrehungen Hinten Links = ");
   Serial.println(encoder3Pos/360);
   Serial.println(" ");
-  BeinHL ->setSpeed(HLRegOut);
+  analogWrite(PWM_3, HLRegOut);
 
   Serial.print("Position Hinten Rechts = ");
   Serial.println(encoder4Pos);
@@ -282,7 +282,7 @@ void loop()
   Serial.print("Anzahl Umdrehungen Hinten Rechts = ");
   Serial.println(encoder4Pos/360);
   Serial.println(" ");
-  BeinHR ->setSpeed(HRRegOut);
+  analogWrite(PWM_4, HRRegOut);
 
   if (encoder1Pos >= Vornesollwert-toleranz && encoder2Pos >= Hintensollwert-toleranz && encoder3Pos >= Hintensollwert-toleranz && encoder4Pos >= Vornesollwert-toleranz)
   {
@@ -292,46 +292,70 @@ void loop()
 
 }
 
-  void encoder1()  {             //ISR Encoderprogrammablauf
-  n1 = digitalRead(PIN_A1);
-    if((encoderPinA1Last == LOW) && (n1 == HIGH)) {
-    if (digitalRead(PIN_B1) == LOW) {
-      encoder1Pos--;
-    } else {
-      encoder1Pos++; }
-  }
-  encoderPinA1Last = n1;
-  }
-
-  /* void encoder2()  {             //ISR Encoderprogrammablauf
-  n2 = digitalRead(PIN_A2);
-    if((encoderPinA2Last == LOW) && (n2 == HIGH)) {
-    if (digitalRead(PIN_B2) == LOW) {
-      encoder2Pos++;
-    } else {
-      encoder2Pos--; }
-  }
-  encoderPinA2Last = n2;
+  void encoder1() //ISR Encoderprogrammablauf
+  {
+    n1 = digitalRead(PIN_A1);
+    if((encoderPinA1Last == LOW) && (n1 == HIGH))
+    {
+      if (digitalRead(PIN_B1) == LOW)
+      {
+        encoder1Pos++;
+      }
+      else
+      {
+        encoder1Pos--;
+      }
+    }
+    encoderPinA1Last = n1;
   }
 
-  void encoder3()  {             //ISR Encoderprogrammablauf
-  n3 = digitalRead(PIN_A3);
-    if((encoderPinA3Last == LOW) && (n3 == HIGH)) {
-    if (digitalRead(PIN_B3) == LOW) {
-      encoder3Pos--;
-    } else {
-      encoder3Pos++; }
-  }
-  encoderPinA3Last = n3;
+  void encoder2() //ISR Encoderprogrammablauf
+  {
+    n2 = digitalRead(PIN_A2);
+    if((encoderPinA2Last == LOW) && (n2 == HIGH))
+    {
+      if (digitalRead(PIN_B2) == LOW)
+      {
+        encoder2Pos--;
+      }
+      else
+      {
+        encoder2Pos++;
+      }
+    }
+    encoderPinA2Last = n2;
   }
 
-  void encoder4()  {             //ISR Encoderprogrammablauf
-  n4 = digitalRead(PIN_A4);
-    if((encoderPinA4Last == LOW) && (n4 == HIGH)) {
-    if (digitalRead(PIN_B4) == LOW) {
-      encoder4Pos++;
-    } else {
-      encoder4Pos--; }
+  void encoder3() //ISR Encoderprogrammablauf
+  {
+    n3 = digitalRead(PIN_A3);
+    if((encoderPinA3Last == LOW) && (n3 == HIGH))
+    {
+      if (digitalRead(PIN_B3) == LOW)
+      {
+        encoder3Pos++;
+      }
+      else
+      {
+        encoder3Pos--;
+      }
+    }
+    encoderPinA3Last = n3;
   }
-  encoderPinA4Last = n4; */
-}
+
+  void encoder4() //ISR Encoderprogrammablauf
+  {
+    n4 = digitalRead(PIN_A4);
+    if((encoderPinA4Last == LOW) && (n4 == HIGH))
+    {
+      if (digitalRead(PIN_B4) == LOW)
+      {
+        encoder4Pos--;
+      }
+      else
+      {
+        encoder4Pos++;
+      }
+    }
+    encoderPinA4Last = n4;
+  }
