@@ -1,6 +1,11 @@
 #include <Arduino.h>
 #include <PID_v1.h>
 
+void encoder1(); //Funktionsdeklaration
+void encoder2();
+void encoder3();
+void encoder4();
+
 //Pinbelegung
 #define PIN_A1 5 //Input A-Signal Encoder VL
 #define PIN_B1 6 //Input B-Signal Encoder VL
@@ -32,8 +37,8 @@ double HLRegOut;
 double HRRegIn;
 double HRRegOut;
 
-int toleranz = 10;    //PID toleranz
-int schritt = 45;      //PID Schrittgrösse
+int toleranz = 0;    //PID toleranz
+int schritt = 30;      //PID Schrittgrösse
 
 double Kp=0.8, Ki=1, Kd=0; //Regler Verstärkungsfaktoren Sollposition
 
@@ -61,11 +66,7 @@ volatile int n3 = LOW;
 volatile int n4 = LOW;
 
 int speedHome = 60; //Homegeschwindigkeit
-
-void encoder1();
-void encoder2();
-void encoder3();
-void encoder4();
+int speedWalk = 55; //Basislaufgeschwindigkeit
 
 void setup()
 {
@@ -90,10 +91,10 @@ void setup()
   pinMode (PWM_4, OUTPUT);
   pinMode (DIR_4, OUTPUT);
 
-  VLReg.SetOutputLimits(0,150);   //Geschwindigkeitsbegrenzungen der Regler definieren, PWM-Range definieren
-  VRReg.SetOutputLimits(0,150);
-  HLReg.SetOutputLimits(0,150);
-  HRReg.SetOutputLimits(0,150);
+  VLReg.SetOutputLimits(0,200);   //Geschwindigkeitsbegrenzungen der Regler definieren, PWM-Range definieren
+  VRReg.SetOutputLimits(0,200);
+  HLReg.SetOutputLimits(0,200);
+  HRReg.SetOutputLimits(0,200);
 
   //Motoren initialisieren
   analogWrite (PWM_1, LOW);   //Geschwindigkeit Motor VL auf Null setzen
@@ -106,11 +107,11 @@ void setup()
   digitalWrite (DIR_4, LOW);  //Drehrichtung Motor HR vorwärts
 
   Serial.begin (9600);
-  /*while(!Serial) //warten bis Serialport verbindet
+  while(!Serial) //warten bis Serialport verbindet
   {
     delay(1);
   }
-  Serial.println("Ready");*/
+  Serial.println("Ready");
   delay(2000);
 
   analogWrite (PWM_1, speedHome); //Homingsequenz
@@ -143,7 +144,7 @@ void setup()
   {
   i2 = digitalRead(PIN_I2); //Indeximpuls für Referenzierung
   }
-  while(encoder2Pos<1030) //Wert muss angepasst werden
+  while(encoder2Pos<1025) //Wert muss angepasst werden
   {
     n2 = digitalRead(PIN_A2);
     if((encoderPinA2Last == LOW) && (n2 == HIGH))
@@ -167,7 +168,7 @@ void setup()
   {
   i3 = digitalRead(PIN_I3); //Indeximpuls für Referenzierung
   }
-  while(encoder3Pos<960) //Wert muss angepasst werden
+  while(encoder3Pos<820) //Wert muss angepasst werden
   {
     n3 = digitalRead(PIN_A3);
     if((encoderPinA3Last == LOW) && (n3 == HIGH))
@@ -228,10 +229,10 @@ void setup()
   attachInterrupt(digitalPinToInterrupt(PIN_A3), encoder3, CHANGE);     //ISR-Definierung für Encoderabtastung
   attachInterrupt(digitalPinToInterrupt(PIN_A4), encoder4, CHANGE);     //ISR-Definierung für Encoderabtastung
 
-  analogWrite (PWM_1, speedHome);
-  analogWrite (PWM_2, speedHome);
-  analogWrite (PWM_3, speedHome);
-  analogWrite (PWM_4, speedHome);
+  analogWrite (PWM_1, speedWalk);
+  analogWrite (PWM_2, speedWalk);
+  analogWrite (PWM_3, speedWalk);
+  analogWrite (PWM_4, speedWalk);
 
 }   //Ende void setup
 
@@ -252,37 +253,25 @@ void loop()
   Serial.println(encoder1Pos);
   Serial.print("Sollposition Vorne Links = ");          //Momentaner Sollwert
   Serial.println(Vornesollwert);
-  Serial.print("Anzahl Umdrehungen Vorne Links = ");    //Anzahl Umdrehungen auf SerialMonitor mitverfolgen
-  Serial.println(encoder1Pos/360);
-  Serial.println(" ");
-  analogWrite(PWM_1, VLRegOut);
+  analogWrite(PWM_1, speedWalk+VLRegOut);
 
   Serial.print("Position Vorne Rechts = ");
   Serial.println(encoder2Pos);
   Serial.print("Sollposition Vorne Rechts = ");
   Serial.println(Hintensollwert);
-  Serial.print("Anzahl Umdrehungen Vorne Rechts = ");
-  Serial.println(encoder2Pos/360);
-  Serial.println(" ");
-  analogWrite(PWM_2, VRRegOut);
+  analogWrite(PWM_2, speedWalk+VRRegOut);
 
   Serial.print("Position Hinten Links = ");
   Serial.println(encoder3Pos);
   Serial.print("Sollposition Hinten Links = ");
   Serial.println(Hintensollwert);
-  Serial.print("Anzahl Umdrehungen Hinten Links = ");
-  Serial.println(encoder3Pos/360);
-  Serial.println(" ");
-  analogWrite(PWM_3, HLRegOut);
+  analogWrite(PWM_3, speedWalk+HLRegOut);
 
   Serial.print("Position Hinten Rechts = ");
   Serial.println(encoder4Pos);
   Serial.print("Sollposition Hinten Rechts = ");
   Serial.println(Vornesollwert);
-  Serial.print("Anzahl Umdrehungen Hinten Rechts = ");
-  Serial.println(encoder4Pos/360);
-  Serial.println(" ");
-  analogWrite(PWM_4, HRRegOut);
+  analogWrite(PWM_4, speedWalk+HRRegOut);
 
   if (encoder1Pos >= Vornesollwert-toleranz && encoder2Pos >= Hintensollwert-toleranz && encoder3Pos >= Hintensollwert-toleranz && encoder4Pos >= Vornesollwert-toleranz)
   {
