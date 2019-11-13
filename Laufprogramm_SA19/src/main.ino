@@ -37,10 +37,10 @@ double HLRegOut;
 double HRRegIn;
 double HRRegOut;
 
-int toleranz = 0;    //PID toleranz
-int schritt = 30;      //PID Schrittgrösse
+int toleranz = 10;    //PID toleranz
+int schritt = 5;      //PID Schrittgrösse
 
-double Kp=0.8, Ki=1, Kd=0; //Regler Verstärkungsfaktoren Sollposition
+double Kp=0.9, Ki=1, Kd=0; //Regler Verstärkungsfaktoren Sollposition
 
 double Vornesollwert = 180;    //Zielposition der Beine
 double Hintensollwert = 0;
@@ -66,7 +66,7 @@ volatile int n3 = LOW;
 volatile int n4 = LOW;
 
 int speedHome = 60; //Homegeschwindigkeit
-int speedWalk = 55; //Basislaufgeschwindigkeit
+int speedWalk = 50; //Basislaufgeschwindigkeit
 
 void setup()
 {
@@ -91,10 +91,10 @@ void setup()
   pinMode (PWM_4, OUTPUT);
   pinMode (DIR_4, OUTPUT);
 
-  VLReg.SetOutputLimits(0,200);   //Geschwindigkeitsbegrenzungen der Regler definieren, PWM-Range definieren
-  VRReg.SetOutputLimits(0,200);
-  HLReg.SetOutputLimits(0,200);
-  HRReg.SetOutputLimits(0,200);
+  VLReg.SetOutputLimits(0,60);   //Geschwindigkeitsbegrenzungen der Regler definieren, PWM-Range definieren
+  VRReg.SetOutputLimits(0,60);
+  HLReg.SetOutputLimits(0,60);
+  HRReg.SetOutputLimits(0,60);
 
   //Motoren initialisieren
   analogWrite (PWM_1, LOW);   //Geschwindigkeit Motor VL auf Null setzen
@@ -168,7 +168,7 @@ void setup()
   {
   i3 = digitalRead(PIN_I3); //Indeximpuls für Referenzierung
   }
-  while(encoder3Pos<820) //Wert muss angepasst werden
+  while(encoder3Pos<750) //Wert muss angepasst werden
   {
     n3 = digitalRead(PIN_A3);
     if((encoderPinA3Last == LOW) && (n3 == HIGH))
@@ -229,15 +229,17 @@ void setup()
   attachInterrupt(digitalPinToInterrupt(PIN_A3), encoder3, CHANGE);     //ISR-Definierung für Encoderabtastung
   attachInterrupt(digitalPinToInterrupt(PIN_A4), encoder4, CHANGE);     //ISR-Definierung für Encoderabtastung
 
-  analogWrite (PWM_1, speedWalk);
+  /*analogWrite (PWM_1, speedWalk);
   analogWrite (PWM_2, speedWalk);
   analogWrite (PWM_3, speedWalk);
-  analogWrite (PWM_4, speedWalk);
+  analogWrite (PWM_4, speedWalk);*/
 
 }   //Ende void setup
 
 void loop()
 {
+  /*
+  delay(10);
   VLRegIn = encoder1Pos;          //Encoderpositionen als Reglereingänge definieren
   VRRegIn = encoder2Pos;
   HLRegIn = encoder3Pos;
@@ -248,30 +250,29 @@ void loop()
   HLReg.Compute();
   HRReg.Compute();
 
-  delay(100);
-  Serial.print("Aktuelle Position Vorne Links = ");       //Position auf SerialMonitor mitverfolgen
+  /*Serial.print("Aktuelle Position Vorne Links = ");       //Position auf SerialMonitor mitverfolgen
   Serial.println(encoder1Pos);
   Serial.print("Sollposition Vorne Links = ");          //Momentaner Sollwert
   Serial.println(Vornesollwert);
-  analogWrite(PWM_1, speedWalk+VLRegOut);
+  analogWrite(PWM_1, VLRegOut);
 
-  Serial.print("Position Vorne Rechts = ");
+  /*Serial.print("Position Vorne Rechts = ");
   Serial.println(encoder2Pos);
   Serial.print("Sollposition Vorne Rechts = ");
   Serial.println(Hintensollwert);
-  analogWrite(PWM_2, speedWalk+VRRegOut);
+  analogWrite(PWM_2, VRRegOut);*/
 
-  Serial.print("Position Hinten Links = ");
+  /*Serial.print("Position Hinten Links = ");
   Serial.println(encoder3Pos);
   Serial.print("Sollposition Hinten Links = ");
   Serial.println(Hintensollwert);
-  analogWrite(PWM_3, speedWalk+HLRegOut);
+  analogWrite(PWM_3, HLRegOut);
 
-  Serial.print("Position Hinten Rechts = ");
+  /*Serial.print("Position Hinten Rechts = ");
   Serial.println(encoder4Pos);
   Serial.print("Sollposition Hinten Rechts = ");
   Serial.println(Vornesollwert);
-  analogWrite(PWM_4, speedWalk+HRRegOut);
+  analogWrite(PWM_4, HRRegOut);
 
   if (encoder1Pos >= Vornesollwert-toleranz && encoder2Pos >= Hintensollwert-toleranz && encoder3Pos >= Hintensollwert-toleranz && encoder4Pos >= Vornesollwert-toleranz)
   {
@@ -279,6 +280,9 @@ void loop()
     Hintensollwert = Hintensollwert+schritt;
   }                                             //Beine bewegen wenn alle auf Position sind
 
+
+  Vornesollwert+=schritt;
+  Hintensollwert+=schritt; */
 }
 
   void encoder1() //ISR Encoderprogrammablauf
