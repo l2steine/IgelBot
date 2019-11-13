@@ -50,7 +50,7 @@ PID VRReg(&VRRegIn, &VRRegOut, &Hintensollwert, Kp, Ki, Kd, DIRECT);
 PID HLReg(&HLRegIn, &HLRegOut, &Hintensollwert, Kp, Ki, Kd, DIRECT);
 PID HRReg(&HRRegIn, &HRRegOut, &Vornesollwert, Kp, Ki, Kd, DIRECT);
 
-int i1, i2, i3, i4; ////A-Signal der Encoder für Beine (VL,VR,HL,HR)
+int i1, i2, i3, i4; ////I-Signal der Encoder für Beine (VL,VR,HL,HR)
 
 volatile int encoder1Pos = 0; //Encoder Values auf 0 Stellen
 volatile int encoder2Pos = 0;
