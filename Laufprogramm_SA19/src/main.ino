@@ -40,7 +40,8 @@ double HRRegOut;
 int toleranz = 10;    //PID toleranz
 int schritt = 5;      //PID Schrittgrösse
 
-double Kp=0.9, Ki=1, Kd=0; //Regler Verstärkungsfaktoren Sollposition
+double Kp=0.9, Ki=1, Kd=0; //Reglerfaktoren Sollposition
+/*double Kp2=1.8, Ki2=1, Kd2=0; //Reglerfaktoren Sollgeschwindigkeit */
 
 double Vornesollwert = 180;    //Zielposition der Beine
 double Hintensollwert = 0;
@@ -49,6 +50,11 @@ PID VLReg(&VLRegIn, &VLRegOut, &Vornesollwert, Kp, Ki, Kd, DIRECT);   //Einricht
 PID VRReg(&VRRegIn, &VRRegOut, &Hintensollwert, Kp, Ki, Kd, DIRECT);
 PID HLReg(&HLRegIn, &HLRegOut, &Hintensollwert, Kp, Ki, Kd, DIRECT);
 PID HRReg(&HRRegIn, &HRRegOut, &Vornesollwert, Kp, Ki, Kd, DIRECT);
+
+/*PID VLSpeedReg(&VListDrehzahl, &VLSpeedRegOut, &VLRegOut, Kp2, Ki2, Kd2, DIRECT);   //Einrichten der Geschwindigkeitsregler (Istwert, Stellwert, Sollwert)
+PID VRSpeedReg(&VRistDrehzahl, &VRSpeedRegOut, &VRRegOut, Kp2, Ki2, Kd2, DIRECT);
+PID HLSpeedReg(&HListDrehzahl, &HLSpeedRegOut, &HLRegOut, Kp2, Ki2, Kd2, DIRECT);
+PID HRSpeedReg(&HRistDrehzahl, &HRSpeedRegOut, &HRRegOut, Kp2, Ki2, Kd2, DIRECT); */
 
 int i1, i2, i3, i4; ////A-Signal der Encoder für Beine (VL,VR,HL,HR)
 
