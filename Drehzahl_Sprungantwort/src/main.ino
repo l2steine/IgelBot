@@ -7,7 +7,6 @@
 void encoder1(); //Funktion zur Encoderabfrage
 void testFunction(); //Funktion zur Sprungantwortermittlung
 void drehzahlBerechnen(); //Funktion zur Drehzahlberechnung
-Ticker testSprung(testFunction, zykluszeit, 0, MICROS_MICROS);
 
 //Pinbelegung
 #define PIN_A1 5 //Input A-Signal Encoder VL
@@ -29,12 +28,15 @@ double istDrehzahl;
 //Variablen für Sprungantwortgenerierung
 unsigned long time = 0; //in us
 unsigned long timeAlt = 0; //in us
-unsigned long testTime = 500000; //Testzeit für Aufnahem der Sprungantwort in Microsekunden
+unsigned long testTime = 100000; //Testzeit für Aufnahme der Sprungantwort in Microsekunden
 const int zykluszeit = 5000; //in Mikrosekunden
 
+//Tickerfunktion definieren
+Ticker testSprung_r(testFunction, zykluszeit, 0, MICROS_MICROS);
+
 //Definition der State-Variablen
-enum state{idle, drehzahl, test, stop};
-state = idle;
+enum stateMode{idle, drehzahl, test, stop};
+stateMode state = idle;
 
 //Testvariable
 int speedTest = 60; //Variable Motorinput für Überprüfung Drehzahlberechnung
@@ -91,11 +93,17 @@ void loop()
     serialString = serialString.substring(0,serialString.length()-1); // Umschaltzeichen welches durch die Eingabe (Enter drücken) hinzugefügt wurde muss entfernt werden
   }
 
+  analogWrite(PWM_1, 60);
+  Serial.print("Aktuelle Drehzahl = ");
+  Serial.println(istDrehzahl);
+  delay(5000);
+
+/*
   //Statemachine
   switch(state)
   {
     // State idle:
-    case idle :
+    case idle:
       // Schreibe Output einmal beim Eintritt in den State:
       if(serialPrintFlag == false)
       {
@@ -122,11 +130,11 @@ void loop()
       break;
 
     // State Drehzahl
-    case drehzahl :
+    case drehzahl:
     //Ausführen Drehzahltest
     if(serialPrintFlag == false)
     {
-      analogWrite(PWM_1, speedTest);
+      analogWrite(PWM_1, 60);
       Serial.print("Aktuelle Drehzahl = ");
       Serial.println(istDrehzahl);
       serialPrintFlag = true;
@@ -150,13 +158,13 @@ void loop()
     break;
 
     //State Test
-    case test :
+    case test:
     // Starten des Testvorgangs:
     if(serialPrintFlag == false)
     {
       timeAlt = micros();
       testSprung.resume();
-      analogWrite(PWM_1, speedSprung); // Sprung setzen --> ACHTUNG: nicht bis ans Maximum!
+      analogWrite(PWM_1, 150); // Sprung setzen --> ACHTUNG: nicht bis ans Maximum!
       serialPrintFlag = true;
     }
     testSprung.update(); //testSprung updaten
@@ -171,15 +179,15 @@ void loop()
     break;
 
     //Case stop
-    case stop :
+    case stop:
     // Schreibe Output und Ausführen der brake-Funktion einmal beim Eintritt:
     if(serialPrintFlag == false)
     {
       Serial.println("Programm wurde beendet");
-      serialPrintFlag_ = true;
+      serialPrintFlag = true;
     }
     break;
-  }
+  }*/
 }
 
 void encoder1() //ISR Encoderprogrammablauf
@@ -199,7 +207,7 @@ void encoder1() //ISR Encoderprogrammablauf
   encoderPinA1Last = n1;
 }
 
-void berechneDrehzahl();
+void drehzahlBerechnen()
 {
   // Counter Differenz:
   // Der Overflow der Countervariable wird  folgendermassen überwacht:
@@ -238,14 +246,14 @@ void berechneDrehzahl();
   // aktuellen Counter für nächste berechnung speichern:
   encoder1PosAlt = encoder1Pos;
   // Frequenz und Drehzahl Encoder:
-  istDrehzahl = ((((double)encoder1Differenz/(double)zykluszeit)/(double)aufloesungEncoder)*60000000);
+  istDrehzahl = ((((double)encoder1Differenz/(double)zykluszeit)/(double)aufloesungEncoder)*60000);
 }
 
 void testFunction()
 {
-  berechneDrehzahl();
+  drehzahlBerechnen();
   Serial.print("Drehzahl : ");
   Serial.println(istDrehzahl);
   Serial.print("Zeit : ");
-  Serial.println(micros() - timeAlt);
+  Serial.println((micros() - timeAlt));
 }
