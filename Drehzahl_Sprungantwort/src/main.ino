@@ -2,7 +2,6 @@
 
 //Funktionsdeklaration
 void encoder1(); //Funktion zur Encoderabfrage
-void drehzahlBerechnen(); //Funktion zur Drehzahlberechnung
 
 //Pinbelegung
 #define PIN_A1 5 //Input A-Signal Encoder VL
@@ -12,17 +11,13 @@ void drehzahlBerechnen(); //Funktion zur Drehzahlberechnung
 #define DIR_1 21 //Richtungsangabe für Motor VL
 
 //Definition Variablen für Encoderauswertung
-volatile int encoder1Pos = 0; //Encoder Value auf 0 Stellen
+volatile unsigned long encoder1Pos = 0; //Encoder Value auf 0 Stellen
 volatile int encoderPinA1Last = LOW; //Nötige Voreinstellungen für das Encoder Programm
-volatile int n1 = LOW; //liest A-Signal des Encoders aus
+volatile bool n1 = LOW; //liest A-Signal des Encoders aus
 
 //Variablen für Sprungantwortgenerierung
 unsigned long timeAlt = 0; //in us
-unsigned long testTime = 5000000; //Testzeit für Aufnahme der Sprungantwort in Microsekunden
-
-//Variable für Drehzahlberechnung, Encoder gibt 360 Impulse pro Umdrehung
-unsigned long timeAlt2 = 0; //in us
-double istDrehzahl;
+unsigned long testTime = 500000; //Testzeit für Aufnahme der Sprungantwort in Microsekunden
 
 //Sprungeingang
 int sprung = 150; //Variable Motorinput für Aufnahme der Sprungantwort
@@ -57,11 +52,11 @@ void setup()
   timeAlt = micros();
   while ((micros()-timeAlt) <= testTime)
   {
-    berechneDrehzahl();
-    Serial.print("Zeit = ");
+    delay(5);
+    Serial.print("Zeit ");
     Serial.print((micros()-timeAlt));
-    Serial.print(" Drehzahl = ");
-    Serial.println(istDrehzahl);
+    Serial.print(" Encoder1Pos ");
+    Serial.println(encoder1Pos);
   }
   analogWrite(PWM_1, 0); //Motor abschalten
 
@@ -87,14 +82,4 @@ void encoder1() //ISR Encoderprogrammablauf
     }
   }
   encoderPinA1Last = n1;
-}
-
-void berechneDrehzahl()
-{
-  timeAlt2 = micros();
-  encoder1Pos = 0;
-  if(encoder1Pos == 90)
-  {
-    istDrehzahl = 0.25*6000000/(micros()-timeAlt2);
-  }
 }
