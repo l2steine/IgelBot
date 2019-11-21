@@ -55,7 +55,7 @@ PID VRReg(&VRRegIn, &VRRegOut, &Hintensollwert, Kp, Ki, Kd, DIRECT);
 PID HLReg(&HLRegIn, &HLRegOut, &Hintensollwert, Kp, Ki, Kd, DIRECT);
 PID HRReg(&HRRegIn, &HRRegOut, &Vornesollwert, Kp, Ki, Kd, DIRECT);
 
-int toleranz = 10; //PID Toleranz
+int speedHome = 100; //PWM-Output für Homespeed
 int schritt = 5; //PID Schrittgrösse
 
 int i1, i2, i3, i4; //I-Signal der Encoder für Beine (VL,VR,HL,HR)
@@ -72,14 +72,24 @@ volatile int n1 = LOW;
 volatile int n2 = LOW;
 volatile int n3 = LOW;
 volatile int n4 = LOW;
-volatile int i; //Laufvariable für Encoderfunktionerzeugung
 
+//Statemachinevariablen
+enum stateMode {idle, home, start, stop};
+stateMode state = idle;
+
+//Variablen für Stringverarbeitung initialisieren
+String serialStringInput;
+const String stringHome = String("home");
+const String stringStart = String("start");
+const String stringStop = String("stop");
+bool flag = false;
+
+//Variablen für Encoderfunktionsgenerierung
+/*volatile int i; //Laufvariable für Encoderfunktionerzeugung
 volatile long encoderArr[4][5] = {{n1, PIN_A1, encoderPinA1Last, PIN_B1, encoder1Pos},
                                   {n2, PIN_A2, encoderPinA2Last, PIN_B2, encoder2Pos},
                                   {n3, PIN_A3, encoderPinA3Last, PIN_B3, encoder3Pos},
-                                  {n4, PIN_A4, encoderPinA4Last, PIN_B4, encoder4Pos}};
-
-int speedWalk = 80; //Basisgeschwindigkeit
+                                  {n4, PIN_A4, encoderPinA4Last, PIN_B4, encoder4Pos}};*/
 
 void setup()
 {
@@ -126,15 +136,34 @@ void setup()
   {
     delay(1);
   }
-  Serial.println("Ready");
-  delay(2000);
+  Serial.println("Serial Monitor verbunden!");
+
+  //Reglermodus einstellen
+  VLReg.SetMode(AUTOMATIC);
+  VRReg.SetMode(AUTOMATIC);
+  HLReg.SetMode(AUTOMATIC);
+  HRReg.SetMode(AUTOMATIC);
+
+  //ISR für Encoderabfrage definieren
+  attachInterrupt(digitalPinToInterrupt(PIN_A1), encoder1L, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(PIN_A2), encoder2R, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(PIN_A3), encoder3L, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(PIN_A4), encoder4R, CHANGE);
+
+  //Erklärung der Programmsteuerung
+  Serial.println("Laufprogramm_SA19");
+  Serial.println("Das Programm wurde erfolgreich initialisiert.");
+  Serial.println("Es kann über folgende Befehle gesteuert werden:");
+  Serial.println("home  = Programm führt Homingfunktion aus");
+  Serial.println("start = startet Laufbewegung");
+  Serial.println("stop  = stoppt Laufbewegung");
 
   //Homing vorne links
-  analogWrite (PWM_1, speedWalk);
+  analogWrite (PWM_1, speedHome);
   Serial.println("Homing vorne links...");
   while (i1 == 0) //Position kalibrieren
   {
-  i1 = digitalRead(PIN_I1); //Indeximpuls für Referenzierung
+    i1 = digitalRead(PIN_I1); //Indeximpuls für Referenzierung
   }
   while(encoder1Pos<1130) //Wert muss angepasst werden
   {
@@ -144,11 +173,11 @@ void setup()
   analogWrite (PWM_1, LOW); //Startposition erreicht
 
   //Homings vorne rechts
-  analogWrite (PWM_2, speedWalk);
+  analogWrite (PWM_2, speedHome);
   Serial.println("Homing vorne rechts...");
   while (i2 == 0) //Position kalibrieren
   {
-  i2 = digitalRead(PIN_I2); //Indeximpuls für Referenzierung
+    i2 = digitalRead(PIN_I2); //Indeximpuls für Referenzierung
   }
   while(encoder2Pos<1080) //Wert muss angepasst werden
   {
@@ -157,112 +186,213 @@ void setup()
   analogWrite (PWM_2, LOW); //Startposition erreicht
 
   //Homing hinten links
-  analogWrite (PWM_3, speedWalk);
+  analogWrite (PWM_3, speedHome);
   Serial.println("Homing hinten links...");
   while (i3 == 0) //Position kalibrieren
   {
-  i3 = digitalRead(PIN_I3); //Indeximpuls für Referenzierung
+    i3 = digitalRead(PIN_I3); //Indeximpuls für Referenzierung
   }
-  while(encoder3Pos<980) //Wert muss angepasst werden
+  while(encoder3Pos<800) //Wert muss angepasst werden
   {
     encoder3L();
   }
   analogWrite (PWM_3, LOW); //Startposition erreicht
 
   //Homing hinten rechts
-  analogWrite (PWM_4, speedWalk);
+  analogWrite (PWM_4, speedHome);
   Serial.println("Homing hinten rechts...");
   while (i4 == 0) //Position kalibrieren
   {
-  i4 = digitalRead(PIN_I4); //Indeximpuls für Referenzierung
+    i4 = digitalRead(PIN_I4); //Indeximpuls für Referenzierung
   }
   while(encoder4Pos<1010) //Wert muss angepasst werden
   {
     encoder4R();
   }
   analogWrite (PWM_4, LOW); //Startposition erreicht
-
   Serial.println("Homing beendet");
-  delay(1000);
 
-  //Reglermodus einstellen
-  VLReg.SetMode(AUTOMATIC);
-  VRReg.SetMode(AUTOMATIC);
-  HLReg.SetMode(AUTOMATIC);
-  HRReg.SetMode(AUTOMATIC);
 
-  //Encoderwerte auf Startposition nullen
-  encoder1Pos = 0;
-  encoder2Pos = 0;
-  encoder3Pos = 0;
-  encoder4Pos = 0;
-  delay(100);
-
-  //ISR für Encoderabfrage definieren
-  attachInterrupt(digitalPinToInterrupt(PIN_A1), encoder1L, CHANGE);
-  attachInterrupt(digitalPinToInterrupt(PIN_A2), encoder2R, CHANGE);
-  attachInterrupt(digitalPinToInterrupt(PIN_A3), encoder3L, CHANGE);
-  attachInterrupt(digitalPinToInterrupt(PIN_A4), encoder4R, CHANGE);
-
-  //
-  Serial.println("Programm: Laufprogramm_SA19");
-  Serial.println("Das Programm wurde erfolgreich initialisiert.");
-  Serial.println("Info: Der H-Bridge Controller kann über folgende Befehle bedient werden: \n");
-  Serial.print("Info: forward  = Motor dreht vorwärts \n");
-  Serial.print("Info: backward = Motor dreht rückwärts \n");
-  Serial.print("Info: brake    = Motor bremst \n");
-  Serial.print("Info: finish   = Programm wird beendet --> sichere Zustand wird hergestellt \n");
-  Serial.print("Info: test     = Test Case wird gestarte um die Spungantwort des Systems aufzunehmen und im Serialmonitor auszugeben \n");
-
-}   //Ende void setup
+} //Ende void setup
 
 void loop()
 {
-
-  delay(10);
-
-  VLRegIn = encoder1Pos;          //Encoderpositionen als Reglereingänge definieren
-  VRRegIn = encoder2Pos;
-  HLRegIn = encoder3Pos;
-  HRRegIn = encoder4Pos;
-
-  VLReg.Compute();                //Regelsystem updaten
-  VRReg.Compute();
-  HLReg.Compute();
-  HRReg.Compute();
-
-  /*Serial.print("Aktuelle Position Vorne Links = ");       //Position auf SerialMonitor mitverfolgen
-  Serial.println(encoder1Pos);
-  Serial.print("Sollposition Vorne Links = ");          //Momentaner Sollwert
-  Serial.println(Vornesollwert);*/
-  analogWrite(PWM_1, VLRegOut);
-
-  /*Serial.print("Position Vorne Rechts = ");
-  Serial.println(encoder2Pos);
-  Serial.print("Sollposition Vorne Rechts = ");
-  Serial.println(Hintensollwert);*/
-  analogWrite(PWM_2, VRRegOut);
-
-  /*Serial.print("Position Hinten Links = ");
-  Serial.println(encoder3Pos);
-  Serial.print("Sollposition Hinten Links = ");
-  Serial.println(Hintensollwert);*/
-  analogWrite(PWM_3, HLRegOut);
-
-  /*Serial.print("Position Hinten Rechts = ");
-  Serial.println(encoder4Pos);
-  Serial.print("Sollposition Hinten Rechts = ");
-  Serial.println(Vornesollwert);*/
-  analogWrite(PWM_4, HRRegOut);
-
-  /*if (encoder1Pos >= Vornesollwert-toleranz && encoder2Pos >= Hintensollwert-toleranz && encoder3Pos >= Hintensollwert-toleranz && encoder4Pos >= Vornesollwert-toleranz)
+  serialStringInput = "";
+  //Serialmonitor abfragen
+  if(Serial.available()>0)
   {
-    Vornesollwert = Vornesollwert+schritt;
-    Hintensollwert = Hintensollwert+schritt;
-  } //Beine bewegen wenn alle auf Position sind*/
-  Vornesollwert+=schritt;
-  Hintensollwert+=schritt;
-}
+    serialStringInput = Serial.readString();
+    serialStringInput.trim(); //entfernt die Leerzeichen nach der Eingabe
+    Serial.flush();
+  }
+
+  //Case der Statemachine bestimmen
+  switch(state)
+  {
+    case idle:
+      //Information ausgeben
+      if(flag == false)
+      {
+        Serial.println("Bevor das Laufprogramm gestartet oder gestoppt werden kann, muessen die Beine gehomet werden.");
+        Serial.println("Bitte geben Sie den Befehl home ein.");
+        flag = true;
+
+      }
+      if(serialStringInput.equals(stringHome))
+      {
+        state = home;
+        flag = false;
+      }
+      break;
+
+    case home:
+      if(flag == false)
+      {
+        Serial.println("Homing beginnt!");
+        flag = true;
+
+        //Homing vorne links
+        analogWrite (PWM_1, speedHome);
+        Serial.println("Homing vorne links...");
+        while (i1 == 0) //Position kalibrieren
+        {
+          i1 = digitalRead(PIN_I1); //Indeximpuls für Referenzierung
+        }
+        while(encoder1Pos<1130) //Wert muss angepasst werden
+        {
+          encoder1L();
+          //encoder1L(encoderArr, i);
+        }
+        analogWrite (PWM_1, LOW); //Startposition erreicht
+
+        //Homings vorne rechts
+        analogWrite (PWM_2, speedHome);
+        Serial.println("Homing vorne rechts...");
+        while (i2 == 0) //Position kalibrieren
+        {
+          i2 = digitalRead(PIN_I2); //Indeximpuls für Referenzierung
+        }
+        while(encoder2Pos<1080) //Wert muss angepasst werden
+        {
+          encoder2R();
+        }
+        analogWrite (PWM_2, LOW); //Startposition erreicht
+
+        //Homing hinten links
+        analogWrite (PWM_3, speedHome);
+        Serial.println("Homing hinten links...");
+        while (i3 == 0) //Position kalibrieren
+        {
+          i3 = digitalRead(PIN_I3); //Indeximpuls für Referenzierung
+        }
+        while(encoder3Pos<800) //Wert muss angepasst werden
+        {
+          encoder3L();
+        }
+        analogWrite (PWM_3, LOW); //Startposition erreicht
+
+        //Homing hinten rechts
+        analogWrite (PWM_4, speedHome);
+        Serial.println("Homing hinten rechts...");
+        while (i4 == 0) //Position kalibrieren
+        {
+          i4 = digitalRead(PIN_I4); //Indeximpuls für Referenzierung
+        }
+        while(encoder4Pos<1010) //Wert muss angepasst werden
+        {
+          encoder4R();
+        }
+        analogWrite (PWM_4, LOW); //Startposition erreicht
+        Serial.println("Homing beendet");
+
+        //Encoderwerte auf Startposition nullen
+        encoder1Pos = 0;
+        encoder2Pos = 0;
+        encoder3Pos = 0;
+        encoder4Pos = 0;
+      }
+      //Nach Homing wird Startbefehl oder Stopbefehl erwartet
+      if(serialStringInput.equals(stringStart))
+      {
+        state = start;
+        flag = false;
+      }
+      else if(serialStringInput.equals(stringStop))
+      {
+        state = stop;
+        flag = false;
+      }
+      break;
+
+    case start:
+      while(state == start)
+      {
+        if(flag == false)
+        {
+          Serial.println("Igel läuft vorwärts!");
+          flag = true;
+        }
+        //Geschwindigkeit bestimmen mit Hilfe des delays (Werte zwischen 5 und 10 sinnvoll)
+        delay(10);
+
+        //Encoderpositionen als Reglereingänge definieren
+        VLRegIn = encoder1Pos;
+        VRRegIn = encoder2Pos;
+        HLRegIn = encoder3Pos;
+        HRRegIn = encoder4Pos;
+
+        //Regelsystem updaten
+        VLReg.Compute();
+        VRReg.Compute();
+        HLReg.Compute();
+        HRReg.Compute();
+
+        //Gschwindigkeit der Motoren anpassen
+        analogWrite(PWM_1, VLRegOut);
+        analogWrite(PWM_2, VRRegOut);
+        analogWrite(PWM_3, HLRegOut);
+        analogWrite(PWM_4, HRRegOut);
+
+        //Beinposition um Schrittwert erhöhen
+        Vornesollwert+=schritt;
+        Hintensollwert+=schritt;
+
+        //Stringwert abfragen
+        if(Serial.available()>0)
+        {
+          serialStringInput = Serial.readString();
+          serialStringInput.trim(); //entfernt alle überflüssigen Leerzeichen welche bei der Befehlseingabe mitgeliefert werden
+          Serial.flush();
+          if(serialStringInput.equals(stringStop))
+          {
+            state = stop;
+            flag = false;
+          }
+        }
+      }
+      break;
+
+    case stop:
+      if(flag == false)
+      {
+        Serial.println("Laufvorgang wird beendet!");
+        flag = true;
+        //alle Motoren abschalten
+        analogWrite(PWM_1, LOW);
+        analogWrite(PWM_2, LOW);
+        analogWrite(PWM_3, LOW);
+        analogWrite(PWM_4, LOW);
+      }
+      if(serialStringInput.equals(stringHome))
+      {
+        state = home;
+        flag = false;
+      }
+      break;
+
+  } //Ende Statemachine
+
+} //Ende void loop
 
 /*  void encoderLinks(volatile long encoderArr[][5], volatile int i)
   {
