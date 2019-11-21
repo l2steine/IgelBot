@@ -144,12 +144,6 @@ void setup()
   HLReg.SetMode(AUTOMATIC);
   HRReg.SetMode(AUTOMATIC);
 
-  //ISR für Encoderabfrage definieren
-  attachInterrupt(digitalPinToInterrupt(PIN_A1), encoder1L, CHANGE);
-  attachInterrupt(digitalPinToInterrupt(PIN_A2), encoder2R, CHANGE);
-  attachInterrupt(digitalPinToInterrupt(PIN_A3), encoder3L, CHANGE);
-  attachInterrupt(digitalPinToInterrupt(PIN_A4), encoder4R, CHANGE);
-
   //Erklärung der Programmsteuerung
   Serial.println("Laufprogramm_SA19");
   Serial.println("Das Programm wurde erfolgreich initialisiert.");
@@ -157,61 +151,6 @@ void setup()
   Serial.println("home  = Programm führt Homingfunktion aus");
   Serial.println("start = startet Laufbewegung");
   Serial.println("stop  = stoppt Laufbewegung");
-
-  //Homing vorne links
-  analogWrite (PWM_1, speedHome);
-  Serial.println("Homing vorne links...");
-  while (i1 == 0) //Position kalibrieren
-  {
-    i1 = digitalRead(PIN_I1); //Indeximpuls für Referenzierung
-  }
-  while(encoder1Pos<1130) //Wert muss angepasst werden
-  {
-    encoder1L();
-    //encoder1L(encoderArr, i);
-  }
-  analogWrite (PWM_1, LOW); //Startposition erreicht
-
-  //Homings vorne rechts
-  analogWrite (PWM_2, speedHome);
-  Serial.println("Homing vorne rechts...");
-  while (i2 == 0) //Position kalibrieren
-  {
-    i2 = digitalRead(PIN_I2); //Indeximpuls für Referenzierung
-  }
-  while(encoder2Pos<1080) //Wert muss angepasst werden
-  {
-    encoder2R();
-  }
-  analogWrite (PWM_2, LOW); //Startposition erreicht
-
-  //Homing hinten links
-  analogWrite (PWM_3, speedHome);
-  Serial.println("Homing hinten links...");
-  while (i3 == 0) //Position kalibrieren
-  {
-    i3 = digitalRead(PIN_I3); //Indeximpuls für Referenzierung
-  }
-  while(encoder3Pos<800) //Wert muss angepasst werden
-  {
-    encoder3L();
-  }
-  analogWrite (PWM_3, LOW); //Startposition erreicht
-
-  //Homing hinten rechts
-  analogWrite (PWM_4, speedHome);
-  Serial.println("Homing hinten rechts...");
-  while (i4 == 0) //Position kalibrieren
-  {
-    i4 = digitalRead(PIN_I4); //Indeximpuls für Referenzierung
-  }
-  while(encoder4Pos<1010) //Wert muss angepasst werden
-  {
-    encoder4R();
-  }
-  analogWrite (PWM_4, LOW); //Startposition erreicht
-  Serial.println("Homing beendet");
-
 
 } //Ende void setup
 
@@ -258,7 +197,7 @@ void loop()
         {
           i1 = digitalRead(PIN_I1); //Indeximpuls für Referenzierung
         }
-        while(encoder1Pos<1130) //Wert muss angepasst werden
+        while(encoder1Pos<990) //Wert muss angepasst werden
         {
           encoder1L();
           //encoder1L(encoderArr, i);
@@ -272,7 +211,7 @@ void loop()
         {
           i2 = digitalRead(PIN_I2); //Indeximpuls für Referenzierung
         }
-        while(encoder2Pos<1080) //Wert muss angepasst werden
+        while(encoder2Pos<960) //Wert muss angepasst werden
         {
           encoder2R();
         }
@@ -285,7 +224,7 @@ void loop()
         {
           i3 = digitalRead(PIN_I3); //Indeximpuls für Referenzierung
         }
-        while(encoder3Pos<800) //Wert muss angepasst werden
+        while(encoder3Pos<805) //Wert muss angepasst werden
         {
           encoder3L();
         }
@@ -298,18 +237,25 @@ void loop()
         {
           i4 = digitalRead(PIN_I4); //Indeximpuls für Referenzierung
         }
-        while(encoder4Pos<1010) //Wert muss angepasst werden
+        while(encoder4Pos<1060) //Wert muss angepasst werden
         {
           encoder4R();
         }
         analogWrite (PWM_4, LOW); //Startposition erreicht
         Serial.println("Homing beendet");
 
+        //ISR für Encoderabfrage definieren
+        attachInterrupt(digitalPinToInterrupt(PIN_A1), encoder1L, CHANGE);
+        attachInterrupt(digitalPinToInterrupt(PIN_A2), encoder2R, CHANGE);
+        attachInterrupt(digitalPinToInterrupt(PIN_A3), encoder3L, CHANGE);
+        attachInterrupt(digitalPinToInterrupt(PIN_A4), encoder4R, CHANGE);
+
         //Encoderwerte auf Startposition nullen
         encoder1Pos = 0;
         encoder2Pos = 0;
         encoder3Pos = 0;
         encoder4Pos = 0;
+
       }
       //Nach Homing wird Startbefehl oder Stopbefehl erwartet
       if(serialStringInput.equals(stringStart))
@@ -386,6 +332,11 @@ void loop()
       if(serialStringInput.equals(stringHome))
       {
         state = home;
+        flag = false;
+      }
+      else if(serialStringInput.equals(stringStart))
+      {
+        state = start;
         flag = false;
       }
       break;
