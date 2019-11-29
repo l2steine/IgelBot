@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <PID_v1.h>
 #include <Wifi101.h>
+#include <SPI.h>
 
 //Encoderfunktionen deklarieren; lesen Encoderveränderungen aus
 /*void encoderLinks(volatile long encoderArr[][5], volatile int i);
@@ -10,9 +11,6 @@ void encoder1L();
 void encoder2R();
 void encoder3L();
 void encoder4R();
-
-//Wifi-Funktionen deklarieren
-void resetWifi();
 
 //Pinbelegung
 #define PIN_A1 5 //Input A-Signal Encoder VL
@@ -96,11 +94,13 @@ volatile long encoderArr[4][5] = {{n1, PIN_A1, encoderPinA1Last, PIN_B1, encoder
                                   {n4, PIN_A4, encoderPinA4Last, PIN_B4, encoder4Pos}};*/
 
 //Variablen für Steuerung per Wifi
-const char *ssid = "";
-const char *password = "";
+char ssid[] = "Luca";
+char pass[] = "abcd1234";
 bool wifiStatus = false;
 WiFiServer server(80);
 String request;
+const char graphischeSeite[] ={} ;
+WiFiClient client;
 
 void setup()
 {
@@ -155,11 +155,6 @@ void setup()
   HLReg.SetMode(AUTOMATIC);
   HRReg.SetMode(AUTOMATIC);
 
-  //Verbindungsaufbau mit Wlan
-  reset Wifi();
-  WiFi.begin(ssid,password);
-  server.begin();
-
   //Erklärung der Programmsteuerung
   Serial.println("Laufprogramm_SA19");
   Serial.println("Das Programm wurde erfolgreich initialisiert.");
@@ -184,6 +179,7 @@ void loop()
 
   //Steuerung per WebServer
   WiFiClient client = server.available();
+
 	if(!client) //warten bis Bediener mit Webserver verbunden
 	{
 		return;
@@ -511,22 +507,4 @@ void loop()
       }
     }
     encoderPinA4Last = n4;
-  }
-
-  void resetWiFi()
-  {
-	  disconnectWiFi(); // Reseting the connections
-    WiFi.mode(WIFI_STA);
-    wifiStatus = WiFi.status() == WL_CONNECTED;
-    delay(1000);
-  }
-
-  void disconnectWiFi()
-  {
-    WiFi.disconnect(true);             // disconnects STA Mode
-    delay(1000);
-    WiFi.softAPdisconnect(true);   // disconnects AP Mode
-    delay(1000);
-    WiFi.mode(WIFI_OFF);
-    wifiStatus = false;
   }
