@@ -94,16 +94,19 @@ volatile long encoderArr[4][5] = {{n1, PIN_A1, encoderPinA1Last, PIN_B1, encoder
                                   {n4, PIN_A4, encoderPinA4Last, PIN_B4, encoder4Pos}};*/
 
 //Variablen für Steuerung per Wifi
-char ssid[] = "Luca";
-char pass[] = "abcd1234";
-bool wifiStatus = false;
+const char ssid[] = "Hedgi";
+const char pass[] = "Semesterarbeit";
+bool wifiStatus = 0;
 WiFiServer server(80);
 String request;
-const char graphischeSeite[] ={} ;
+const char graphischeSeite[] ="<!DOCTYPE html>\n<html>\n  <head>\n    <meta http-equiv=\"content-type\" content=\"text/html; charset=UTF-8\">\n    <title>Semesterarbeit 2019 Steiner</title>\n  </head>\n  <body style=\"     background-color:#427C98;\">\n    <h1 style=\"color:white;font-family:Bahnschrift;\">autonom agierender\n      Igel-Roboter</h1>\n    <h2 style=\"color:white;font-family:Bahnschrift;\"><u>Programmsteuerung</u></h2>\n    <p><span style=\"color: white;\">Klicken sie <a href=\\home\\>Home</a> um\n        den Homingvorgang zu starten!<br>\n      </span></p>\n    <p><br>\n      <span style=\"color: white;\">Klicken sie <a href=\\start\\>Start</a>\n        um den Laufvorgang zu starten!</span></p>\n    <p><br>\n      <span style=\"color: white;\">Klicken sie <a href=\\stop\\>Stop</a> um\n        den Laufvorgang zu stoppen!</span></p>\n    <p><span style=\"color: white;\"><br>\n      </span></p>\n    <p><br>\n    </p>\n  </body>\n</html>\n\n\n\n\n";
 WiFiClient client;
 
 void setup()
 {
+  //Wlanmodul aktivieren
+  WiFi.setPins(8,7,4,2);
+
   //Pins definieren
   pinMode (PIN_A1, INPUT);
   pinMode (PIN_B1, INPUT);
@@ -163,6 +166,10 @@ void setup()
   Serial.println("start = startet Laufbewegung");
   Serial.println("stop  = stoppt Laufbewegung");
 
+  //AccessPoint einrichten
+  wifiStatus = WiFi.beginAP(ssid);
+  server.begin(); //Webserver starten
+
 } //Ende void setup
 
 void loop()
@@ -180,19 +187,32 @@ void loop()
   //Steuerung per WebServer
   WiFiClient client = server.available();
 
-	if(!client) //warten bis Bediener mit Webserver verbunden
-	{
-		return;
-	}
-
   while(client.connected())
 	{
 		if(client.available())
-		{
-			// Read the first line of the request
-			request = client.readStringUntil('\r');
-			// client.read(); // read '\r'
-			request += '\r';
+    {
+      char c = client.read();
+      if (c == '\n')
+      {
+        if(request.length() == 0)
+        {
+          client.print(graphischeSeite);
+          client.println();
+        }
+        else
+        {
+          request = "";
+        }
+      }
+      else if(c != '\r')
+      {
+        request += c;
+      }
+      if (request.startsWith("GET /home"))
+      {
+        state = home;
+        flag = false;
+      }
     }
 
   //Case der Statemachine bestimmen
@@ -212,11 +232,6 @@ void loop()
         state = home;
         flag = false;
       }*/
-      if(request.startsWith("GET/case/Home")>0)
-			{
-				state = home;
-        flag = false;
-			}
       break;
 
     case home:
@@ -303,14 +318,14 @@ void loop()
         state = stop;
         flag = false;
       }*/
-      if(request.startsWith("GET/case/Start")>0)
-			{
-				state = start;
+      if (request.startsWith("GET /start"))
+      {
+        state = start;
         flag = false;
       }
-      else if(request.startsWith("GET/case/Stop")>0)
-			{
-				state = stop;
+      else if (request.startsWith("GET /stop"))
+      {
+        state = stop;
         flag = false;
       }
 
@@ -362,17 +377,31 @@ void loop()
           }
         }*/
         if(client.available())
-    		{
-    			// Read the first line of the request
-    			request = client.readStringUntil('\r');
-    			// client.read(); // read '\r'
-    			request += '\r';
-          if(request.startsWith("GET/case/Stop")>0)
+        {
+          char c = client.read();
+          if (c == '\n')
           {
-           state = stop;
-           flag = false;
+            if(request.length() == 0)
+            {
+              client.print(graphischeSeite);
+              client.println();
+            }
+            else
+            {
+              request = "";
+            }
+          }
+          else if(c != '\r')
+          {
+            request += c;
+          }
+          if (request.startsWith("GET /stop"))
+          {
+            state = stop;
+            flag = false;
           }
         }
+
       }
       break;
 
@@ -392,10 +421,10 @@ void loop()
         state = start;
         flag = false;
       }*/
-      if(request.startsWith("GET/case/Start")>0)
+      if (request.startsWith("GET /start"))
       {
-       state = start;
-       flag = false;
+        state = start;
+        flag = false;
       }
       break;
     }
