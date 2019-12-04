@@ -3,36 +3,29 @@
 #include <Wifi101.h>
 #include <SPI.h>
 
-//Encoderfunktionen deklarieren; lesen Encoderveränderungen aus
-/*void encoderLinks(volatile long encoderArr[][5], volatile int i);
-void encoderRechts(volatile long encoderArr[][5], volatile int i);
-void encoder1L(volatile long encoderArr[][5], volatile int i);*/
 void encoder1L();
 void encoder2R();
 void encoder3L();
 void encoder4R();
 
 //Pinbelegung
-#define PIN_A1 5 //Input A-Signal Encoder VL
+#define PIN_A1 9 //Input A-Signal Encoder VL
 #define PIN_B1 6 //Input B-Signal Encoder VL
-#define PIN_I1 9 //Input I-Signal Encoder VL
+#define PIN_I1 0 //Input I-Signal Encoder VL
 #define PWM_1 13 //PWM-Ausgang für Motor VL
-#define DIR_1 21 //Richtungsangabe für Motor VL
-#define PIN_A2 17 //Input A-Signal Encoder VR
-#define PIN_B2 16 //Input B-Signal Encoder VR
-#define PIN_I2 15 //Input I-Signal Encoder VR
+#define PIN_A2 21 //Input A-Signal Encoder VR
+#define PIN_B2 5 //Input B-Signal Encoder VR
+#define PIN_I2 1 //Input I-Signal Encoder VR
 #define PWM_2 12 //PWM-Ausgang für Motor VR
-#define DIR_2 20 //Richtungsangabe für Motor VR
-#define PIN_A3 1 //Input A-Signal Encoder HL
-#define PIN_B3 0 //Input B-Signal Encoder HL
-#define PIN_I3 22 //Input I-Signal Encoder HL
+#define PIN_A3 19 //Input A-Signal Encoder HL
+#define PIN_B3 18 //Input B-Signal Encoder HL
+#define PIN_I3 17 //Input I-Signal Encoder HL
 #define PWM_3 11 //PWM-Ausgang für Motor HL
-#define DIR_3 14 //Richtungsangabe für Motor HL
-#define PIN_A4 24 //Input A-Signal Encoder HR
-#define PIN_B4 19 //Input B-Signal Encoder HR
-#define PIN_I4 18 //Input I-Signal Encoder HR
+#define PIN_A4 16 //Input A-Signal Encoder HR
+#define PIN_B4 15 //Input B-Signal Encoder HR
+#define PIN_I4 14 //Input I-Signal Encoder HR
 #define PWM_4 10 //PWM-Ausgang Motor HR
-#define DIR_4 23 //Richtungsangabe für Motor HR
+#define DIR_0 20//Richtungsangabe für alle Motoren
 
 //Deklaration der Reglerin- und Outputs (muessen double sein!)
 double VLRegIn;
@@ -86,48 +79,53 @@ const String stringStart = String("start");
 const String stringStop = String("stop");
 bool flag = false;
 
-//Variablen für Encoderfunktionsgenerierung
-/*volatile int i; //Laufvariable für Encoderfunktionerzeugung
-volatile long encoderArr[4][5] = {{n1, PIN_A1, encoderPinA1Last, PIN_B1, encoder1Pos},
-                                  {n2, PIN_A2, encoderPinA2Last, PIN_B2, encoder2Pos},
-                                  {n3, PIN_A3, encoderPinA3Last, PIN_B3, encoder3Pos},
-                                  {n4, PIN_A4, encoderPinA4Last, PIN_B4, encoder4Pos}};*/
-
 //Variablen für Steuerung per Wifi
 const char ssid[] = "Hedgi";
 const char pass[] = "Semesterarbeit";
-bool wifiStatus = 0;
-WiFiServer server(80);
 String request;
-const char graphischeSeite[] ="<!DOCTYPE html>\n<html>\n  <head>\n    <meta http-equiv=\"content-type\" content=\"text/html; charset=UTF-8\">\n    <title>Semesterarbeit 2019 Steiner</title>\n  </head>\n  <body style=\"     background-color:#427C98;\">\n    <h1 style=\"color:white;font-family:Bahnschrift;\">autonom agierender\n      Igel-Roboter</h1>\n    <h2 style=\"color:white;font-family:Bahnschrift;\"><u>Programmsteuerung</u></h2>\n    <p><span style=\"color: white;\">Klicken sie <a href=\\home\\>Home</a> um\n        den Homingvorgang zu starten!<br>\n      </span></p>\n    <p><br>\n      <span style=\"color: white;\">Klicken sie <a href=\\start\\>Start</a>\n        um den Laufvorgang zu starten!</span></p>\n    <p><br>\n      <span style=\"color: white;\">Klicken sie <a href=\\stop\\>Stop</a> um\n        den Laufvorgang zu stoppen!</span></p>\n    <p><span style=\"color: white;\"><br>\n      </span></p>\n    <p><br>\n    </p>\n  </body>\n</html>\n\n\n\n\n";
+bool wifiStatus = LOW;
 WiFiClient client;
+WiFiServer server(80);
+const char graphischeSeite[] ="<!DOCTYPE html>\n"
+                              "<html>\n"
+                              "  <head>\n"
+                              "    <meta http-equiv=\"content-type\" content=\"text/html; charset=UTF-8\">\n"
+                              "    <title>Semesterarbeit 2019 Steiner</title>\n"
+                              "  </head>\n"
+                              "  <body style=\"background-color:#427C98;\">\n"
+                              "    <h1 style=\"color: white; font-family: Bahnschrift; text-align: center;\">autonom agierender Igel-Roboter</h1>\n"
+                              "    <h2 style=\"color: white; font-family: Bahnschrift; text-align: center;\"><u>Programmsteuerung</u></h2>\n"
+                              "    <p style=\"text-align: center;\">\n"
+                              "      <a href=\\home\\><button type=\"button\">Home</button></a>\n"
+                              "      <a href=\\start\\><button type=\"button\">Start</button></a> \n"
+                              "      <a href=\\stop\\><button type=\"button\">Stop</button></a></p>\n"
+                              "  </body>\n"
+                              "</html>\n";
 
 void setup()
 {
-  //Wlanmodul aktivieren
-  WiFi.setPins(8,7,4,2);
+  WiFi.setPins(8,7,4,2); //Wlanmodul aktivieren
+  wifiStatus = WiFi.beginAP(ssid); //AccessPoint einrichten
+  server.begin(); //Webserver starten
 
   //Pins definieren
   pinMode (PIN_A1, INPUT);
   pinMode (PIN_B1, INPUT);
   pinMode (PIN_I1, INPUT);
   pinMode (PWM_1, OUTPUT);
-  pinMode (DIR_1, OUTPUT);
   pinMode (PIN_A2, INPUT);
   pinMode (PIN_B2, INPUT);
   pinMode (PIN_I2, INPUT);
   pinMode (PWM_2, OUTPUT);
-  pinMode (DIR_2, OUTPUT);
   pinMode (PIN_A3, INPUT);
   pinMode (PIN_B3, INPUT);
   pinMode (PIN_I3, INPUT);
   pinMode (PWM_3, OUTPUT);
-  pinMode (DIR_3, OUTPUT);
   pinMode (PIN_A4, INPUT);
   pinMode (PIN_B4, INPUT);
   pinMode (PIN_I4, INPUT);
   pinMode (PWM_4, OUTPUT);
-  pinMode (DIR_4, OUTPUT);
+  pinMode (DIR_0, OUTPUT);
 
   //PWM-Outputbegrenzung des Reglers
   VLReg.SetOutputLimits(0,255);
@@ -137,13 +135,10 @@ void setup()
 
   //Motoren initialisieren
   analogWrite (PWM_1, LOW); //Geschwindigkeit Motor VL auf Null setzen
-  digitalWrite (DIR_1, HIGH); //Drehrichtung Motor VL vorwärts
   analogWrite (PWM_2, LOW); //Geschwindigkeit Motor VR auf Null setzen
-  digitalWrite (DIR_2, LOW); //Drehrichtung Motor VR vorwärts
   analogWrite (PWM_3, LOW); //Geschwindigkeit Motor HL auf Null setzen
-  digitalWrite (DIR_3, HIGH); //Drehrichtung Motor HL vorwärts
   analogWrite (PWM_4, LOW); //Geschwindigkeit Motor HR auf Null setzen
-  digitalWrite (DIR_4, LOW); //Drehrichtung Motor HR vorwärts
+  digitalWrite (DIR_0, HIGH); //Drehrichtung aller Motoren vorwärts
 
   Serial.begin (9600);
   while(!Serial) //warten bis Serialport verbindet
@@ -166,15 +161,11 @@ void setup()
   Serial.println("start = startet Laufbewegung");
   Serial.println("stop  = stoppt Laufbewegung");
 
-  //AccessPoint einrichten
-  wifiStatus = WiFi.beginAP(ssid);
-  server.begin(); //Webserver starten
-
 } //Ende void setup
 
 void loop()
 {
-  /*//Steuerung per Serialmonitor
+  //Steuerung per Serialmonitor
   serialStringInput = "";
   //Serialmonitor abfragen
   if(Serial.available()>0)
@@ -182,8 +173,9 @@ void loop()
     serialStringInput = Serial.readString();
     serialStringInput.trim(); //entfernt die Leerzeichen nach der Eingabe
     Serial.flush();
-  }*/
+  }
 
+/*
   //Steuerung per WebServer
   WiFiClient client = server.available();
 
@@ -214,7 +206,7 @@ void loop()
         flag = false;
       }
     }
-
+*/
   //Case der Statemachine bestimmen
   switch(state)
   {
@@ -227,11 +219,11 @@ void loop()
         flag = true;
 
       }
-      /*if(serialStringInput.equals(stringHome))
+      if(serialStringInput.equals(stringHome))
       {
         state = home;
         flag = false;
-      }*/
+      }
       break;
 
     case home:
@@ -250,7 +242,6 @@ void loop()
         while(encoder1Pos<990) //Wert muss angepasst werden
         {
           encoder1L();
-          //encoder1L(encoderArr, i);
         }
         analogWrite (PWM_1, LOW); //Startposition erreicht
 
@@ -307,7 +298,7 @@ void loop()
         encoder4Pos = 0;
 
       }
-      /*//Nach Homing wird Startbefehl oder Stopbefehl erwartet
+      //Nach Homing wird Startbefehl oder Stopbefehl erwartet
       if(serialStringInput.equals(stringStart))
       {
         state = start;
@@ -317,7 +308,7 @@ void loop()
       {
         state = stop;
         flag = false;
-      }*/
+      }/*
       if (request.startsWith("GET /start"))
       {
         state = start;
@@ -328,7 +319,7 @@ void loop()
         state = stop;
         flag = false;
       }
-
+*/
       break;
 
     case start:
@@ -364,7 +355,7 @@ void loop()
         Vornesollwert+=schritt;
         Hintensollwert+=schritt;
 
-        /*//Stringwert abfragen
+        //Stringwert abfragen
         if(Serial.available()>0)
         {
           serialStringInput = Serial.readString();
@@ -375,7 +366,7 @@ void loop()
             state = stop;
             flag = false;
           }
-        }*/
+        }/*
         if(client.available())
         {
           char c = client.read();
@@ -402,7 +393,7 @@ void loop()
           }
         }
 
-      }
+      }*/
       break;
 
     case stop:
@@ -416,16 +407,16 @@ void loop()
         analogWrite(PWM_3, LOW);
         analogWrite(PWM_4, LOW);
       }
-      /*if(serialStringInput.equals(stringStart))
+      if(serialStringInput.equals(stringStart))
       {
         state = start;
         flag = false;
-      }*/
+      }/*
       if (request.startsWith("GET /start"))
       {
         state = start;
         flag = false;
-      }
+      }*/
       break;
     }
 
@@ -433,45 +424,8 @@ void loop()
 
 } //Ende void loop
 
-/*  void encoderLinks(volatile long encoderArr[][5], volatile int i)
-  {
-    encoderArr[i][0] = digitalRead(encoderArr[i][1]);
-    if((encoderArr[i][2] == LOW) && (encoderArr[i][0] == HIGH))
-    {
-      if (digitalRead(encoderArr[i][3]) == LOW)
-      {
-        encoderArr[i][4]++;
-      }
-      else
-      {
-        encoderArr[i][4]--;
-      }
-    }
-    encoderArr[i][2] = encoderArr[i][0];
-  }
-
-  void encoderRechts(volatile long encoderArr[][5], volatile int i)
-  {
-    encoderArr[i][0] = digitalRead(encoderArr[i][1]);
-    if((encoderArr[i][2] == LOW) && (encoderArr[i][0] == HIGH))
-    {
-      if (digitalRead(encoderArr[i][3]) == LOW)
-      {
-        encoderArr[i][4]--;
-      }
-      else
-      {
-        encoderArr[i][4]++;
-      }
-    }
-    encoderArr[i][2] = encoderArr[i][0];
-  }
-*/
-  //void encoder1L(volatile long encoderArr[][5], volatile int i) //ISR Encoderprogrammablauf Encoder 1
   void encoder1L()
   {
-    //i = 0;
-    //encoderLinks(encoderArr, i);
     n1 = digitalRead(PIN_A1);
     if((encoderPinA1Last == LOW) && (n1 == HIGH))
     {
