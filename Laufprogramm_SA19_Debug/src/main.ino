@@ -1,3 +1,4 @@
+//Libraries einfügen
 #include <Arduino.h>
 #include <PID_v1.h>
 
@@ -36,28 +37,28 @@ double HLRegOut;
 double HRRegIn;
 double HRRegOut;
 
-double Kp=1.5, Ki=0, Kd=0; //PID Regleranteile
+double Kp=1.5, Ki=0, Kd=0.1; //PID Regleranteile
 
 //Sollposition der Beine
-double Vornesollwert = 180;
-double Hintensollwert = 0;
+double vorneSollwert = 180;
+double hintenSollwert = 0;
 
 //PID-Positionsregler definieren (Momentanwert, Regelwert, Sollwert)
-PID VLReg(&VLRegIn, &VLRegOut, &Vornesollwert, Kp, Ki, Kd, DIRECT);
-PID VRReg(&VRRegIn, &VRRegOut, &Hintensollwert, Kp, Ki, Kd, DIRECT);
-PID HLReg(&HLRegIn, &HLRegOut, &Hintensollwert, Kp, Ki, Kd, DIRECT);
-PID HRReg(&HRRegIn, &HRRegOut, &Vornesollwert, Kp, Ki, Kd, DIRECT);
+PID VLReg(&VLRegIn, &VLRegOut, &vorneSollwert, Kp, Ki, Kd, DIRECT);
+PID VRReg(&VRRegIn, &VRRegOut, &hintenSollwert, Kp, Ki, Kd, DIRECT);
+PID HLReg(&HLRegIn, &HLRegOut, &hintenSollwert, Kp, Ki, Kd, DIRECT);
+PID HRReg(&HRRegIn, &HRRegOut, &vorneSollwert, Kp, Ki, Kd, DIRECT);
 
 int speedHome = 100; //PWM-Output für Homespeed
 int schritt = 5; //Winkelerhöhung pro Zyklus in Grad
 
 //Variablen für Encoderverarbeitung
-int i1, i2, i3, i4; //speichern des I-Signals
-volatile long encoder1Pos = 0; //Encoder Values auf 0 Stellen
+int i1, i2, i3, i4; //Variablen zur Speicherung des I-Signals
+volatile long encoder1Pos = 0; //Encodervalues auf 0 Stellen
 volatile long encoder2Pos = 0;
 volatile long encoder3Pos = 0;
 volatile long encoder4Pos = 0;
-volatile long encoderPinA1Last = LOW;  //nötige Voreinstellungen für Encoderfunktion
+volatile long encoderPinA1Last = LOW; //nötige Voreinstellungen für Encoderfunktion
 volatile long encoderPinA2Last = LOW;
 volatile long encoderPinA3Last = LOW;
 volatile long encoderPinA4Last = LOW;
@@ -111,10 +112,10 @@ void setup()
   HRReg.SetMode(AUTOMATIC);
 
   //Motoren initialisieren
-  analogWrite (PWM_1, LOW); //Geschwindigkeit Motor VL auf Null setzen
-  analogWrite (PWM_2, LOW); //Geschwindigkeit Motor VR auf Null setzen
-  analogWrite (PWM_3, LOW); //Geschwindigkeit Motor HL auf Null setzen
-  analogWrite (PWM_4, LOW); //Geschwindigkeit Motor HR auf Null setzen
+  analogWrite (PWM_1, LOW); //Geschwindigkeit Motoren auf Null setzen
+  analogWrite (PWM_2, LOW);
+  analogWrite (PWM_3, LOW);
+  analogWrite (PWM_4, LOW);
   digitalWrite (DIR_0, HIGH); //Drehrichtung aller Motoren vorwärts
 
   Serial.begin(9600);
@@ -142,7 +143,7 @@ void loop()
   if(Serial.available()>0)
   {
     serialStringInput = Serial.readString();
-    serialStringInput.trim(); //entfernt die Leerzeichen nach der Eingabe
+    serialStringInput.trim(); //entfernt alle Leerzeichen nach den eingegebenen Zeichen
     Serial.flush();
   }
 
@@ -177,7 +178,7 @@ void loop()
         {
           i1 = digitalRead(PIN_I1); //Indeximpuls für Referenzierung
         }
-        while(encoder1Pos<980) //Wert muss angepasst werden
+        while(encoder1Pos<875) //Winkelposition der Homingposition, muss angepasst werden wenn Encoder getauscht werden
         {
           encoder1L();
         }
@@ -190,7 +191,7 @@ void loop()
         {
           i2 = digitalRead(PIN_I2); //Indeximpuls für Referenzierung
         }
-        while(encoder2Pos<1050) //Wert muss angepasst werden
+        while(encoder2Pos<1010) //Winkelposition der Homingposition, muss angepasst werden wenn Encoder getauscht werden
         {
           encoder2R();
         }
@@ -203,7 +204,7 @@ void loop()
         {
           i3 = digitalRead(PIN_I3); //Indeximpuls für Referenzierung
         }
-        while(encoder3Pos<1059) //Wert muss angepasst werden
+        while(encoder3Pos<1035) //Winkelposition der Homingposition, muss angepasst werden wenn Encoder getauscht werden
         {
           encoder3L();
         }
@@ -216,20 +217,20 @@ void loop()
         {
           i4 = digitalRead(PIN_I4); //Indeximpuls für Referenzierung
         }
-        while(encoder4Pos<1050) //Wert muss angepasst werden
+        while(encoder4Pos<1020) //Winkelposition der Homingposition, muss angepasst werden wenn Encoder getauscht werden
         {
           encoder4R();
         }
         analogWrite (PWM_4, LOW); //Startposition erreicht
         Serial.println("Homing beendet");
 
-        //Encoderwerte auf Startposition setzen
+        //Encoderwerte auf Startposition = 0 setzen
         encoder1Pos = 0;
         encoder2Pos = 0;
         encoder3Pos = 0;
         encoder4Pos = 0;
 
-        //ISR für Encoderabfrage definieren
+        //ISR's für Encoderabfrage definieren
         attachInterrupt(digitalPinToInterrupt(PIN_A1), encoder1L, CHANGE);
         attachInterrupt(digitalPinToInterrupt(PIN_A2), encoder2R, CHANGE);
         attachInterrupt(digitalPinToInterrupt(PIN_A3), encoder3L, CHANGE);
@@ -252,8 +253,8 @@ void loop()
           Serial.println("Igel läuft vorwärts!");
           flag = true;
         }
-        //Geschwindigkeit bestimmen mit Hilfe des delays (Werte zwischen 5 und 10 sinnvoll)
-        delay(10);
+        //Geschwindigkeit bestimmen mit Hilfe des delays (Werte zwischen 5 und 15 sinnvoll)
+        delay(11);
 
         //Encoderpositionen als Reglereingänge definieren
         VLRegIn = encoder1Pos;
@@ -274,14 +275,14 @@ void loop()
         analogWrite(PWM_4, HRRegOut);
 
         //Beinposition um Schrittwert erhöhen
-        Vornesollwert+=schritt;
-        Hintensollwert+=schritt;
+        vorneSollwert+=schritt;
+        hintenSollwert+=schritt;
 
         //Stringwert abfragen
         if(Serial.available()>0)
         {
           serialStringInput = Serial.readString();
-          serialStringInput.trim(); //entfernt alle überflüssigen Leerzeichen welche bei der Befehlseingabe mitgeliefert werden
+          serialStringInput.trim(); //entfernt alle Leerzeichen nach den eingegebenen Zeichen
           Serial.flush();
           if(serialStringInput.equals(stringStop))
           {

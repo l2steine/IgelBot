@@ -1,3 +1,4 @@
+//Libraries einfügen
 #include <Arduino.h>
 #include <PID_v1.h>
 #include <Wifi101.h>
@@ -38,28 +39,28 @@ double HLRegOut;
 double HRRegIn;
 double HRRegOut;
 
-double Kp=1.5, Ki=0, Kd=0; //PID Regleranteile
+double Kp=1.5, Ki=0, Kd=0.1; //PID Regleranteile
 
 //Sollposition der Beine
-double Vornesollwert = 180;
-double Hintensollwert = 0;
+double vorneSollwert = 180;
+double hintenSollwert = 0;
 
 //PID-Positionsregler definieren (Momentanwert, Regelwert, Sollwert)
-PID VLReg(&VLRegIn, &VLRegOut, &Vornesollwert, Kp, Ki, Kd, DIRECT);
-PID VRReg(&VRRegIn, &VRRegOut, &Hintensollwert, Kp, Ki, Kd, DIRECT);
-PID HLReg(&HLRegIn, &HLRegOut, &Hintensollwert, Kp, Ki, Kd, DIRECT);
-PID HRReg(&HRRegIn, &HRRegOut, &Vornesollwert, Kp, Ki, Kd, DIRECT);
+PID VLReg(&VLRegIn, &VLRegOut, &vorneSollwert, Kp, Ki, Kd, DIRECT);
+PID VRReg(&VRRegIn, &VRRegOut, &hintenSollwert, Kp, Ki, Kd, DIRECT);
+PID HLReg(&HLRegIn, &HLRegOut, &hintenSollwert, Kp, Ki, Kd, DIRECT);
+PID HRReg(&HRRegIn, &HRRegOut, &vorneSollwert, Kp, Ki, Kd, DIRECT);
 
 int speedHome = 100; //PWM-Output für Homespeed
 int schritt = 5; //Winkelerhöhung pro Zyklus in Grad
 
 //Variablen für Encoderverarbeitung
-int i1, i2, i3, i4; //speichern des I-Signals
+int i1, i2, i3, i4; //Variablen zur Speicherung des I-Signals
 volatile long encoder1Pos = 0; //Encoder Values auf 0 Stellen
 volatile long encoder2Pos = 0;
 volatile long encoder3Pos = 0;
 volatile long encoder4Pos = 0;
-volatile long encoderPinA1Last = LOW;  //nötige Voreinstellungen für Encoderfunktion
+volatile long encoderPinA1Last = LOW; //nötige Voreinstellungen für Encoderfunktion
 volatile long encoderPinA2Last = LOW;
 volatile long encoderPinA3Last = LOW;
 volatile long encoderPinA4Last = LOW;
@@ -86,22 +87,29 @@ const char graphischeSeite[] ="<!DOCTYPE html>\n"
                               "    <meta http-equiv=\"content-type\" content=\"text/html; charset=UTF-8\">\n"
                               "    <title>Semesterarbeit 2019 Steiner</title>\n"
                               "  </head>\n"
-                              "  <body style=\"background-color:#427C98;\">\n"
-                              "    <h1 style=\"color: white; font-family: Bahnschrift; text-align: center;\">autonom agierender Igel-Roboter</h1>\n"
+                              "  <body style=\"background-color: #427c98;\">\n"
+                              "    <h1 style=\"color: white; font-family: Bahnschrift; text-align: center;\"><u>autonom agierender Igel-Roboter</u></h1>\n"
+                              "    <p style=\"text-align: center;\"><span style=\"color: white; font-family: Bahnschrift;\">\n"
+                              "        Das Programm wurde erfolgreich initialisiert.<br>\n"
+                              "        Es kann über folgende Befehle gesteuert werden:<br>\n"
+                              "        Home = Programm führt Homingfunktion aus<br>\n"
+                              "        Start = startet Laufbewegung<br>\n"
+                              "        Stop = stoppt Laufbewegung<br>\n"
+                              "        Bevor das Laufprogramm gestartet werden kann muss einmal die Homingfunktion ausgeführt werden. </span></p>\n"
                               "    <h2 style=\"color: white; font-family: Bahnschrift; text-align: center;\"><u>Programmsteuerung</u></h2>\n"
                               "    <p style=\"text-align: center;\">\n"
                               "      <a href=\\home\\><button type=\"button\">Home</button></a>\n"
-                              "      <a href=\\start\\><button type=\"button\">Start</button></a> \n"
+                              "      <a href=\\start\\><button type=\"button\">Start</button></a>\n"
                               "      <a href=\\stop\\><button type=\"button\">Stop</button></a></p>\n"
                               "  </body>\n"
                               "</html>\n";
 
-int a; //Laufvariable für WiFi-Steuerung
+int a; //Laufvariable für Homing
 
 void setup()
 {
   WiFi.setPins(8,7,4,2); //Wlanmodul aktivieren
-  wifiStatus = WiFi.beginAP(ssid); //AccessPoint einrichten
+  wifiStatus = WiFi.beginAP(ssid, pass); //AccessPoint einrichten
   server.begin(); //Webserver starten
 
   //Pins definieren
@@ -136,10 +144,10 @@ void setup()
   HRReg.SetMode(AUTOMATIC);
 
   //Motoren initialisieren
-  analogWrite (PWM_1, LOW); //Geschwindigkeit Motor VL auf Null setzen
-  analogWrite (PWM_2, LOW); //Geschwindigkeit Motor VR auf Null setzen
-  analogWrite (PWM_3, LOW); //Geschwindigkeit Motor HL auf Null setzen
-  analogWrite (PWM_4, LOW); //Geschwindigkeit Motor HR auf Null setzen
+  analogWrite (PWM_1, LOW); //Geschwindigkeit Motoren auf Null setzen
+  analogWrite (PWM_2, LOW);
+  analogWrite (PWM_3, LOW);
+  analogWrite (PWM_4, LOW);
   digitalWrite (DIR_0, HIGH); //Drehrichtung aller Motoren vorwärts
 
 } //Ende void setup
@@ -198,7 +206,7 @@ void loop()
           {
             i1 = digitalRead(PIN_I1); //Indeximpuls für Referenzierung
           }
-          while(encoder1Pos<980) //Wert muss angepasst werden
+          while(encoder1Pos<875) //Winkelposition der Homingposition, muss angepasst werden wenn Encoder getauscht werden
           {
             encoder1L();
           }
@@ -210,7 +218,7 @@ void loop()
           {
             i2 = digitalRead(PIN_I2); //Indeximpuls für Referenzierung
           }
-          while(encoder2Pos<1050) //Wert muss angepasst werden
+          while(encoder2Pos<1010) //Winkelposition der Homingposition, muss angepasst werden wenn Encoder getauscht werden
           {
             encoder2R();
           }
@@ -222,7 +230,7 @@ void loop()
           {
             i3 = digitalRead(PIN_I3); //Indeximpuls für Referenzierung
           }
-          while(encoder3Pos<1050) //Wert muss angepasst werden
+          while(encoder3Pos<1035) //Winkelposition der Homingposition, muss angepasst werden wenn Encoder getauscht werden
           {
             encoder3L();
           }
@@ -234,7 +242,7 @@ void loop()
           {
             i4 = digitalRead(PIN_I4); //Indeximpuls für Referenzierung
           }
-          while(encoder4Pos<1050) //Wert muss angepasst werden
+          while(encoder4Pos<1020) //Winkelposition der Homingposition, muss angepasst werden wenn Encoder getauscht werden
           {
             encoder4R();
           }
@@ -266,8 +274,8 @@ void loop()
         break;
 
       case start:
-        //Geschwindigkeit bestimmen mit Hilfe des delays (Werte zwischen 5 und 10 sinnvoll)
-        delay(10);
+        //Geschwindigkeit bestimmen mit Hilfe des delays (Werte zwischen 5 und 15 sinnvoll)
+        delay(11);
 
         //Encoderpositionen als Reglereingänge definieren
         VLRegIn = encoder1Pos;
@@ -283,13 +291,13 @@ void loop()
 
         //Gschwindigkeit der Motoren anpassen
         analogWrite(PWM_1, VLRegOut);
-        analogWrite(PWM_3, HLRegOut);
         analogWrite(PWM_2, VRRegOut);
+        analogWrite(PWM_3, HLRegOut);
         analogWrite(PWM_4, HRRegOut);
 
         //Beinsollpositionen um Schrittwert erhöhen
-        Vornesollwert+=schritt;
-        Hintensollwert+=schritt;
+        vorneSollwert+=schritt;
+        hintenSollwert+=schritt;
 
         if (request.startsWith("GET /stop"))
         {
